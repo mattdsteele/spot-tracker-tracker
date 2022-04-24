@@ -3,22 +3,16 @@ package spot
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func SaveLatestTimestap(ctx context.Context) error {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	client := dynamodb.NewFromConfig(cfg)
+func SaveLatestTimestap(config aws.Config, timestamp time.Time) error {
+	client := dynamodb.NewFromConfig(config)
 	input := &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
 			"spot-tracker-latest-ping": {
@@ -26,14 +20,14 @@ func SaveLatestTimestap(ctx context.Context) error {
 					PutRequest: &types.PutRequest{
 						Item: map[string]types.AttributeValue{
 							"id":    &types.AttributeValueMemberS{Value: "latest-entry"},
-							"value": &types.AttributeValueMemberN{Value: fmt.Sprint(time.Now().Unix())},
+							"value": &types.AttributeValueMemberN{Value: fmt.Sprint(timestamp.Unix())},
 						},
 					},
 				},
 			},
 		},
 	}
-	res, err := client.BatchWriteItem(ctx, input)
+	res, err := client.BatchWriteItem(context.Background(), input)
 	if err != nil {
 		return err
 	}
@@ -48,13 +42,9 @@ type I struct {
 	Value int64
 }
 
-func GetLatestTimestamp(ctx context.Context) (*time.Time, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	client := dynamodb.NewFromConfig(cfg)
-	item, err := client.GetItem(ctx, &dynamodb.GetItemInput{
+func GetLatestTimestamp(config aws.Config) (*time.Time, error) {
+	client := dynamodb.NewFromConfig(config)
+	item, err := client.GetItem(context.Background(), &dynamodb.GetItemInput{
 		TableName: aws.String("spot-tracker-latest-ping"),
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: "latest-entry"},

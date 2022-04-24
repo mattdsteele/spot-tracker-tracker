@@ -24,7 +24,7 @@ func TestParseSuccess(t *testing.T) {
 	if wrapper.Response.Errors != nil {
 		t.Fatal("errors is not nil")
 	}
-	Equals(t, 3, len(wrapper.Response.FeedMessageResponse.MessageWrapper.Messages))
+	Equals(t, 4, len(wrapper.Response.FeedMessageResponse.MessageWrapper.Messages))
 }
 func TestParseError(t *testing.T) {
 	data, err := ioutil.ReadFile("error.json")

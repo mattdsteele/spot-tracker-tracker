@@ -1,29 +1,84 @@
 {
   "response": {
     "feedMessageResponse": {
+      "count": 4,
+      "feed": {
+        "id": "redacted",
+        "name": "spot-feed-private",
+        "description": "spot-feed-private",
+        "status": "ACTIVE",
+        "usage": 0,
+        "daysRange": 7,
+        "detailedMessageShown": true,
+        "type": "SHARED_PAGE"
+      },
+      "totalCount": 4,
+      "activityCount": 0,
       "messages": {
         "message": [
           {
-            "id": 1605371088,
-            "latitude": 41.26519,
-            "longitude": -95.99069,
-            "dateTime": "2021-06-26T23:21:24+0000",
+            "@clientUnixTime": "0",
+            "id": 1757063618,
+            "messengerId": "0-3537610",
+            "messengerName": "Matt S",
+            "unixTime": 1650812328,
+            "messageType": "UNLIMITED-TRACK",
+            "latitude": 31.27671,
+            "longitude": -85.98815,
+            "modelId": "SPOT3",
+            "showCustomMsg": "Y",
+            "dateTime": "2022-04-24T14:58:48+0000",
             "batteryState": "GOOD",
-            "altitude": -103
+            "hidden": 0,
+            "altitude": 398
           },
           {
-            "id": 1605371124,
-            "latitude": 41.2639,
-            "longitude": -95.98545,
-            "dateTime": "2021-06-26T23:11:24+0000",
+            "@clientUnixTime": "0",
+            "id": 1757061668,
+            "messengerId": "0-3537610",
+            "messengerName": "Matt S",
+            "unixTime": 1650812030,
+            "messageType": "UNLIMITED-TRACK",
+            "latitude": 31.27656,
+            "longitude": -85.98804,
+            "modelId": "SPOT3",
+            "showCustomMsg": "Y",
+            "dateTime": "2022-04-24T14:53:50+0000",
+            "batteryState": "GOOD",
+            "hidden": 0,
+            "altitude": 365
+          },
+          {
+            "@clientUnixTime": "0",
+            "id": 1757061691,
+            "messengerId": "0-3537610",
+            "messengerName": "Matt S",
+            "unixTime": 1650811730,
+            "messageType": "UNLIMITED-TRACK",
+            "latitude": 31.27656,
+            "longitude": -85.98804,
+            "modelId": "SPOT3",
+            "showCustomMsg": "Y",
+            "dateTime": "2022-04-24T14:48:50+0000",
+            "batteryState": "GOOD",
+            "hidden": 0,
             "altitude": 0
           },
           {
-            "id": 1605365385,
-            "latitude": 41.25448,
-            "longitude": -95.94189,
-            "dateTime": "2021-06-26T23:06:01+0000",
-            "altitude": -103
+            "@clientUnixTime": "0",
+            "id": 1757058425,
+            "messengerId": "0-3537610",
+            "messengerName": "Matt S",
+            "unixTime": 1650811434,
+            "messageType": "UNLIMITED-TRACK",
+            "latitude": 41.27652,
+            "longitude": -95.9881,
+            "modelId": "SPOT3",
+            "showCustomMsg": "Y",
+            "dateTime": "2022-04-24T14:43:54+0000",
+            "batteryState": "GOOD",
+            "hidden": 0,
+            "altitude": 383
           }
         ]
       }
