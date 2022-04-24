@@ -4,8 +4,8 @@ type Wrapper struct {
 	Response Response `json:"response"`
 }
 type Response struct {
-	Errors              Errors              `json:"errors"`
-	FeedMessageResponse FeedMessageResponse `json:"feedMessageResponse"`
+	Errors              *Errors              `json:"errors,omitempty"`
+	FeedMessageResponse *FeedMessageResponse `json:"feedMessageResponse,omitempty"`
 }
 type FeedMessageResponse struct {
 	MessageWrapper MessageWrapper `json:"messages"`

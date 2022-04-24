@@ -21,6 +21,9 @@ func TestParseSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(wrapper)
+	if wrapper.Response.Errors != nil {
+		t.Fatal("errors is not nil")
+	}
 	Equals(t, 3, len(wrapper.Response.FeedMessageResponse.MessageWrapper.Messages))
 }
 func TestParseError(t *testing.T) {
@@ -32,6 +35,9 @@ func TestParseError(t *testing.T) {
 	err = json.Unmarshal(data, &wrapper)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if wrapper.Response.FeedMessageResponse != nil {
+		t.Fatal("response is not nil")
 	}
 	t.Log(wrapper)
 	Equals(t, "No Messages to display", wrapper.Response.Errors.Error.Text)
