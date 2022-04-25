@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<script type="module">
+    import * as awsSdkClientLocation from 'https://cdn.skypack.dev/@aws-sdk/client-location';
+    import * as awsSdkClientCognitoIdentity from 'https://cdn.skypack.dev/@aws-sdk/client-cognito-identity';
+    import * as awsSdkCredentialProviderCognitoIdentity from 'https://cdn.skypack.dev/@aws-sdk/credential-provider-cognito-identity';
+    console.log(awsSdkClientLocation)
+    console.log(awsSdkClientCognitoIdentity)
+    console.log(awsSdkCredentialProviderCognitoIdentity)
+    const identityPoolId = "us-east-2:d7c4f4cf-c815-460d-9f54-afebc355b05c";
+    const region = 'us-east-2';
+    const credentials = awsSdkCredentialProviderCognitoIdentity.fromCognitoIdentityPool({
+        client: new awsSdkClientCognitoIdentity.CognitoIdentityClient({ region }),
+        identityPoolId
+    })
+    const { LocationClient, GetDevicePositionHistoryCommand } = awsSdkClientLocation;
+    const client = new LocationClient({
+        region,
+        credentials
+    });
+    console.log(client);
+    const input = {
+        TrackerName: 'spot-tracker-tracker',
+        DeviceId: 'foobar'
+    };
+    const command = new GetDevicePositionHistoryCommand(input);
+    const response = await client.send(command);
+    console.log(response);
+
+</script>
+
+<body>
+    
+</body>
+</html>

@@ -42,5 +42,6 @@ func UpdatePosition(cfg aws.Config, lon, lat float64, time time.Time) error {
 	if len(output.Errors) > 0 {
 		return errors.New(fmt.Sprint(output.Errors))
 	}
+
 	return nil
 }
