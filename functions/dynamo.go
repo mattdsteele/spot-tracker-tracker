@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 )
 
 func SaveLatestTimestap(config aws.Config, timestamp time.Time) error {
@@ -60,4 +61,36 @@ func GetLatestTimestamp(config aws.Config) (*time.Time, error) {
 	}
 	t := time.Unix(i.Value, 0)
 	return &t, nil
+}
+
+func SaveFenceTransition(config aws.Config, loc *FenceTransitionDetails) error {
+	latitude := fmt.Sprint(loc.Position[1])
+	longitude := fmt.Sprint(loc.Position[0])
+	client := dynamodb.NewFromConfig(config)
+	input := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
+			"spot-tracker-fence-events": {
+				{
+					PutRequest: &types.PutRequest{
+						Item: map[string]types.AttributeValue{
+							"uuid":      &types.AttributeValueMemberS{Value: uuid.NewString()},
+							"deviceId":  &types.AttributeValueMemberS{Value: loc.DeviceId},
+							"eventType": &types.AttributeValueMemberS{Value: loc.EventType},
+							"geofence":  &types.AttributeValueMemberS{Value: loc.GeofenceId},
+							"eventTime": &types.AttributeValueMemberS{Value: loc.SampleTime},
+							"location":  &types.AttributeValueMemberNS{Value: []string{longitude, latitude}},
+						},
+					},
+				},
+			},
+		},
+	}
+	res, err := client.BatchWriteItem(context.Background(), input)
+	if err != nil {
+		return err
+	}
+	if len(res.UnprocessedItems) > 0 {
+		fmt.Println(res.UnprocessedItems)
+	}
+	return nil
 }

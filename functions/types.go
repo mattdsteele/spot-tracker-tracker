@@ -30,3 +30,11 @@ type Message struct {
 	BatteryState string  `json:"batteryState"`
 	Altitude     int     `json:"altitude"`
 }
+
+type FenceTransitionDetails struct {
+	EventType  string `json:"EventType"`
+	GeofenceId string `json:"GeofenceId"`
+	DeviceId   string
+	SampleTime string
+	Position   []float64
+}

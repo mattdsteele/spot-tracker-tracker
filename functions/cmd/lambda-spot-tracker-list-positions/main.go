@@ -15,7 +15,7 @@ import (
 type location struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
-	Time      string  `json:"time`
+	Time      string  `json:"time"`
 }
 
 func toLocation(p types.DevicePosition) (l location) {
