@@ -13,6 +13,7 @@ import (
 )
 
 var TrackerName string = "spot-tracker-tracker"
+var FenceSetName string = "spot-tracker-tracker"
 var DeviceId string = "foobar"
 
 func GetTrackerPositionHistory(cfg aws.Config, daysBack int) ([]types.DevicePosition, error) {
@@ -63,4 +64,15 @@ func ListDevices(cfg aws.Config) []types.ListDevicePositionsResponseEntry {
 		log.Fatal(err)
 	}
 	return positions.Entries
+}
+
+func ListGeofences(cfg aws.Config) []types.ListGeofenceResponseEntry {
+	client := location.NewFromConfig(cfg)
+	fences, err := client.ListGeofences(context.Background(), &location.ListGeofencesInput{
+		CollectionName: &FenceSetName,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	return fences.Entries
 }
