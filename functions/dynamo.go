@@ -12,11 +12,14 @@ import (
 	"github.com/google/uuid"
 )
 
+var LatestPingTable = "spot-tracker-latest-ping"
+var FenceEventsTable = "spot-tracker-fence-events"
+
 func SaveLatestTimestap(config aws.Config, timestamp time.Time) error {
 	client := dynamodb.NewFromConfig(config)
 	input := &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
-			"spot-tracker-latest-ping": {
+			LatestPingTable: {
 				{
 					PutRequest: &types.PutRequest{
 						Item: map[string]types.AttributeValue{
@@ -46,7 +49,7 @@ type I struct {
 func GetLatestTimestamp(config aws.Config) (*time.Time, error) {
 	client := dynamodb.NewFromConfig(config)
 	item, err := client.GetItem(context.Background(), &dynamodb.GetItemInput{
-		TableName: aws.String("spot-tracker-latest-ping"),
+		TableName: aws.String(LatestPingTable),
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: "latest-entry"},
 		},
@@ -64,20 +67,20 @@ func GetLatestTimestamp(config aws.Config) (*time.Time, error) {
 }
 
 func SaveFenceTransition(config aws.Config, loc *FenceTransitionDetails) error {
-	latitude := fmt.Sprint(loc.Position[1])
-	longitude := fmt.Sprint(loc.Position[0])
+	latitude := fmt.Sprint(loc.Location[1])
+	longitude := fmt.Sprint(loc.Location[0])
 	client := dynamodb.NewFromConfig(config)
 	input := &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
-			"spot-tracker-fence-events": {
+			FenceEventsTable: {
 				{
 					PutRequest: &types.PutRequest{
 						Item: map[string]types.AttributeValue{
 							"uuid":      &types.AttributeValueMemberS{Value: uuid.NewString()},
 							"deviceId":  &types.AttributeValueMemberS{Value: loc.DeviceId},
 							"eventType": &types.AttributeValueMemberS{Value: loc.EventType},
-							"geofence":  &types.AttributeValueMemberS{Value: loc.GeofenceId},
-							"eventTime": &types.AttributeValueMemberS{Value: loc.SampleTime},
+							"geofence":  &types.AttributeValueMemberS{Value: loc.Geofence},
+							"eventTime": &types.AttributeValueMemberS{Value: loc.EventTime},
 							"location":  &types.AttributeValueMemberNS{Value: []string{longitude, latitude}},
 						},
 					},
@@ -93,4 +96,25 @@ func SaveFenceTransition(config aws.Config, loc *FenceTransitionDetails) error {
 		fmt.Println(res.UnprocessedItems)
 	}
 	return nil
+}
+
+func GetFenceTransitions(config aws.Config) ([]FenceTransitionDetails, error) {
+	client := dynamodb.NewFromConfig(config)
+	results, err := client.Scan(context.Background(), &dynamodb.ScanInput{
+		TableName: &FenceEventsTable,
+	})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("Found items: ", results.Count)
+	return toFenceTransitionDetails(results.Items)
+}
+
+func toFenceTransitionDetails(transitions []map[string]types.AttributeValue) ([]FenceTransitionDetails, error) {
+	var dtos []FenceTransitionDetails
+	err := attributevalue.UnmarshalListOfMaps(transitions, &dtos)
+	if err != nil {
+		return nil, err
+	}
+	return dtos, nil
 }

@@ -32,9 +32,9 @@ type Message struct {
 }
 
 type FenceTransitionDetails struct {
-	EventType  string `json:"EventType"`
-	GeofenceId string `json:"GeofenceId"`
-	DeviceId   string
-	SampleTime string
-	Position   []float64
+	EventType string    `json:"eventType"`
+	Geofence  string    `json:"geofence"`
+	DeviceId  string    `json:"deviceId"`
+	EventTime string    `json:"eventTime"`
+	Location  []float64 `json:"location"`
 }
