@@ -38,3 +38,18 @@ type FenceTransitionDetails struct {
 	EventTime string    `json:"eventTime"`
 	Location  []float64 `json:"location"`
 }
+
+type Course struct {
+	Name         string            `json:"name"`
+	Route        []Point           `json:"route"`
+	CoursePoints []PointOfInterest `json:"pointsOfInterest"`
+}
+type Point struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+type PointOfInterest struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Name      string  `json:"name"`
+}
