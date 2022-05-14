@@ -1,6 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css'
 import maplibregl from 'maplibre-gl';
+import type * as geojson from 'geojson'
 
 const map = new maplibregl.Map({
     container: 'map',
@@ -66,6 +67,7 @@ map.on('load', async () => {
             }
         })
     }
+
     map.addSource('f', { type: 'geojson', data: fencesG })
     map.addLayer({
         id: 'fences-layer',
@@ -77,4 +79,20 @@ map.on('load', async () => {
 
         }
     })
+    const getCourseStructureUrl = 'https://galw5wepzdonotejavrka3zrqm0zmnwb.lambda-url.us-east-2.on.aws/'
+    const getCourseStructureResponse = await fetch(getCourseStructureUrl);
+    const courseStructureJ = await getCourseStructureResponse.json();
+    const courseGeojson: geojson.GeoJSON = {
+        type: 'LineString',
+        coordinates: courseStructureJ.route.map(c => {
+            return [c.longitude, c.latitude]
+        })
+    }
+    map.addSource('course', {type: 'geojson', data: courseGeojson})
+    map.addLayer({
+        id: 'course-layer',
+        source: 'course',
+        type: 'line'
+    })
+    console.log(courseStructureJ)
 })
