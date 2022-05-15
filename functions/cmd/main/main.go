@@ -11,8 +11,9 @@ import (
 
 func main() {
 	cfg, _ := config.LoadDefaultConfig(context.Background())
-	hist, _ := spot.GetTrackerPositionHistory(cfg, 30)
+	hist, _ := spot.GetTrackerPositionHistory(cfg, 1)
 	for _, i := range hist {
 		fmt.Printf("%s %f %f\n", i.SampleTime.Format(time.RFC3339), i.Position[0], i.Position[1])
 	}
+	fmt.Println(len(hist))
 }

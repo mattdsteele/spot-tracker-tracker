@@ -27,7 +27,7 @@ func toLocation(p types.DevicePosition) (l location) {
 func main() {
 	lambda.Start(func(ctx context.Context) (events.LambdaFunctionURLResponse, error) {
 		config, _ := config.LoadDefaultConfig(ctx)
-		positions, _ := spot.GetTrackerPositionHistory(config, 30)
+		positions, _ := spot.GetTrackerPositionHistory(config, 2)
 		locations := make([]location, 0)
 		for _, p := range positions {
 			locations = append(locations, toLocation(p))
