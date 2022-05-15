@@ -22,9 +22,8 @@ map.on("load", async () => {
     .sort((a, b) => (a.time < b.time ? 1 : -1));
   const now = new Date().getTime();
   const earliest = resJ[resJ.length - 1].time;
-  const mapValues = (x, in_min, in_max, out_min, out_max) =>
+  const mapValues = (x: number, in_min: number, in_max: number, out_min: number, out_max: number) =>
     ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
-  console.log(resJ);
   const geojson = {
     type: "FeatureCollection",
     features: resJ.map((r) => {
@@ -40,10 +39,7 @@ map.on("load", async () => {
       };
     }),
   };
-  console.log(geojson);
   map.addSource("p", { type: "geojson", data: geojson });
-  console.log(map.isSourceLoaded("p"));
-  console.log(map.getSource("p"));
   map.addLayer({
     id: "points-layer",
     source: "p",
