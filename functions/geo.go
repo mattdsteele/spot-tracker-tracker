@@ -16,17 +16,38 @@ var TrackerName string = "spot-tracker-tracker"
 var FenceSetName string = "spot-tracker-tracker"
 var DeviceId string = "foobar"
 
+func resolveNextToken(token *string) *string {
+	if token != nil {
+		awsToken := aws.String(*token)
+		return awsToken
+	}
+	return nil
+}
 func GetTrackerPositionHistory(cfg aws.Config, daysBack int) ([]types.DevicePosition, error) {
 	client := location.NewFromConfig(cfg)
-	his, err := client.GetDevicePositionHistory(context.Background(), &location.GetDevicePositionHistoryInput{
-		TrackerName:        aws.String(TrackerName),
-		StartTimeInclusive: aws.Time(time.Now().AddDate(0, 0, -daysBack)),
-		DeviceId:           aws.String(DeviceId),
-	})
-	if err != nil {
-		return nil, err
+	allResultsFound := false
+	var nextToken *string
+	now := time.Now().AddDate(0, 0, -daysBack)
+	positions := make([]types.DevicePosition, 0)
+	for !allResultsFound {
+		x := &location.GetDevicePositionHistoryInput{
+			TrackerName:        aws.String(TrackerName),
+			StartTimeInclusive: aws.Time(now),
+			DeviceId:           aws.String(DeviceId),
+			NextToken:          resolveNextToken(nextToken),
+		}
+
+		his, err := client.GetDevicePositionHistory(context.Background(), x)
+		if err != nil {
+			return nil, err
+		}
+		if his.NextToken == nil {
+			allResultsFound = true
+		}
+		nextToken = his.NextToken
+		positions = append(positions, his.DevicePositions...)
 	}
-	return his.DevicePositions, nil
+	return positions, nil
 }
 
 func UpdatePosition(cfg aws.Config, lon, lat float64, sampleTime time.Time) error {
@@ -39,10 +60,8 @@ func UpdatePosition(cfg aws.Config, lon, lat float64, sampleTime time.Time) erro
 			Position:   []float64{lon, lat},
 		}},
 	}
-	fmt.Println("About to save")
 	output, err := client.BatchUpdateDevicePosition(context.Background(), positionInput)
 	if err != nil {
-		fmt.Println("Save encountered error!")
 		fmt.Println(err)
 		log.Fatal(err)
 	}
