@@ -12,6 +12,7 @@
     "vite": "^2.9.5"
   },
   "dependencies": {
+    "@turf/turf": "^6.5.0",
     "@types/geojson": "^7946.0.8",
     "maplibre-gl": "^2.1.9"
   }

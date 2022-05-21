@@ -2,6 +2,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 import maplibregl, { Map } from 'maplibre-gl';
 import type * as geojson from 'geojson';
+import { center } from '@turf/turf';
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -10,12 +11,6 @@ const map = new maplibregl.Map({
   center: [-95.98, 41.27695], // starting position [lng, lat]
   zoom: 11, // starting zoom
 });
-type Pings = Ping[];
-type Ping = {
-  latitude: number;
-  longitude: number;
-  time: string;
-};
 
 map.on('load', async () => {
   addPointsToMap(map);
@@ -23,6 +18,12 @@ map.on('load', async () => {
   addCourseToMap(map);
 });
 async function addPointsToMap(map: Map) {
+  type Pings = Ping[];
+  type Ping = {
+    latitude: number;
+    longitude: number;
+    time: string;
+  };
   const spotPings = await fetch(
     'https://ewymlkyn437zs2dlpep5royeea0jjrvk.lambda-url.us-east-2.on.aws/'
   );
@@ -137,5 +138,8 @@ async function addCourseToMap(map: Map) {
     source: 'course',
     type: 'line',
   });
+  const newCenter = center(courseGeojson);
+  const newCenterCoords = newCenter.geometry.coordinates;
+  map.setCenter(newCenterCoords as any)
 }
 
