@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -25,9 +26,14 @@ func toLocation(p types.DevicePosition) (l location) {
 	return l
 }
 func main() {
-	lambda.Start(func(ctx context.Context) (events.LambdaFunctionURLResponse, error) {
+	lambda.Start(func(ctx context.Context, request events.APIGatewayProxyRequest) (events.LambdaFunctionURLResponse, error) {
+		daysBack := request.QueryStringParameters["days"]
+		days := 2
+		if daysBack != "" {
+			days, _ = strconv.Atoi(daysBack)
+		}
 		config, _ := config.LoadDefaultConfig(ctx)
-		positions, _ := spot.GetTrackerPositionHistory(config, 2)
+		positions, _ := spot.GetTrackerPositionHistory(config, days)
 		locations := make([]location, 0)
 		for _, p := range positions {
 			locations = append(locations, toLocation(p))
