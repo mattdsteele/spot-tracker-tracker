@@ -70,7 +70,7 @@ async function captureAnalytics() {
     <p>${snapped.properties.location} miles</p>
     <p>Updated at ${t.toISOString()}
   `
-  var popup = new maplibregl.Popup({ closeOnClick: false })
+  new maplibregl.Popup({ closeOnClick: false })
     .setLngLat(lngLat)
     .setHTML(template)
     .addTo(map);
