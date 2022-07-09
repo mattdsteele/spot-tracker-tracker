@@ -1,8 +1,38 @@
+import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
+import type * as geojson from 'geojson';
+import maplibregl, { Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
-import maplibregl, { Map } from 'maplibre-gl';
-import type * as geojson from 'geojson';
-import { center } from '@turf/turf';
+
+type Pings = Ping[];
+type Ping = {
+  latitude: number;
+  longitude: number;
+  time: number;
+};
+type FenceDefinition = {
+  'fence-name': string;
+  geometry: [number, number];
+};
+  type course = {
+    name: string;
+    route: point[];
+    pointsOfInterest: pointsOfInterest[];
+  };
+  type point = {
+    latitude: number;
+    longitude: number;
+  };
+  type pointsOfInterest = {
+    latitude: number;
+    longitude: number;
+    name: string;
+  };
+
+const state: Partial<{
+  pings: Pings;
+  course: course
+}> = { };
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -13,20 +43,44 @@ const map = new maplibregl.Map({
 });
 
 map.on('load', async () => {
-  addPointsToMap(map);
-  addFencesToMap(map);
-  addCourseToMap(map);
+  Promise.all([
+    addPointsToMap(map),
+    addFencesToMap(map),
+    addCourseToMap(map),
+  ]).then(() => {
+    console.log(state);
+    captureAnalytics();
+  });
 });
-async function addPointsToMap(map: Map) {
-  type Pings = Ping[];
-  type Ping = {
-    latitude: number;
-    longitude: number;
-    time: string;
-  };
-  const spotPings = await fetch(
-    'https://ewymlkyn437zs2dlpep5royeea0jjrvk.lambda-url.us-east-2.on.aws/'
+async function captureAnalytics() {
+  const line = lineString(
+    state.course?.route?.map(({ latitude, longitude }) => [longitude, latitude])
   );
+  const [latest] = state.pings;
+  const lngLat: [number, number] = [latest.longitude, latest.latitude]
+  const point = turfPoint(lngLat);
+  const snapped = nearestPointOnLine(line, point, { units: 'miles' });
+  console.log('nearest point', snapped);
+  console.log(`${snapped.properties.location} miles travelled`);
+  const t = new Date(latest.time);
+  console.log(`Posted at ${t.toISOString()}`);
+  map.setCenter(lngLat);
+
+  const template = `
+    <p>${snapped.properties.location} miles</p>
+    <p>Updated at ${t.toISOString()}
+  `
+  var popup = new maplibregl.Popup({ closeOnClick: false })
+    .setLngLat(lngLat)
+    .setHTML(template)
+    .addTo(map);
+
+}
+async function addPointsToMap(map: Map) {
+  const daysToSearch = 10;
+  const baseUrl =
+    'https://ewymlkyn437zs2dlpep5royeea0jjrvk.lambda-url.us-east-2.on.aws/';
+  const spotPings = await fetch(`${baseUrl}?days=${daysToSearch}`);
   let spotPingsJson: Pings = await spotPings.json();
   const pings = spotPingsJson
     .map((r) => ({
@@ -34,8 +88,10 @@ async function addPointsToMap(map: Map) {
       time: new Date(r.time).getTime(),
     }))
     .sort((a, b) => (a.time < b.time ? 1 : -1));
+  state.pings = pings;
   const now = new Date().getTime();
-  const latestPing = pings[pings.length - 1];
+  const latestPing = pings[0];
+  console.log('Latest ping', latestPing);
   const earliest = latestPing?.time;
   const mapValues = (
     x: number,
@@ -55,6 +111,7 @@ async function addPointsToMap(map: Map) {
         },
         properties: {
           opacity: mapValues(r.time, earliest, now, 0.1, 1),
+          latest: r.time === latestPing.time ? 'true' : 'false'
         },
       };
     }),
@@ -67,6 +124,25 @@ async function addPointsToMap(map: Map) {
     paint: {
       // 'circle-radius': [ 'coalesce', ['get', 'asdf'], 10, ],
       'circle-pitch-alignment': 'map',
+      "circle-color": [
+        'match',
+        ['get', 'latest'],
+        'true', 'green',
+        'false', 'black',
+        'orange'
+      ],
+      'circle-radius': [
+        'match', ['get', 'latest'],
+        'true', 15,
+        'false', 3,
+        1
+      ],
+      'circle-opacity': [
+        'match', ['get', 'latest'],
+        'true', 1,
+        'false', 0.5,
+        0.5
+      ]
       // https://docs.mapbox.com/mapbox-gl-js/example/data-driven-circle-colors/
       // "circle-opacity": ["get", "opacity"],
     },
@@ -74,10 +150,6 @@ async function addPointsToMap(map: Map) {
 }
 
 async function addFencesToMap(map: Map) {
-  type FenceDefinition = {
-    'fence-name': string,
-    geometry: [number, number]
-  }
   const fences = await fetch(
     'https://6f7w2jqblnebkk75folo4zv7j40qvxfp.lambda-url.us-east-2.on.aws/'
   );
@@ -111,21 +183,8 @@ async function addCourseToMap(map: Map) {
   const getCourseStructureUrl =
     'https://galw5wepzdonotejavrka3zrqm0zmnwb.lambda-url.us-east-2.on.aws/';
   const getCourseStructureResponse = await fetch(getCourseStructureUrl);
-  type course = {
-    name: string;
-    route: point[];
-    pointsOfInterest: pointsOfInterest[];
-  };
-  type point = {
-    latitude: number;
-    longitude: number;
-  };
-  type pointsOfInterest = {
-    latitude: number;
-    longitude: number;
-    name: string;
-  };
   const courseStructureJ: course = await getCourseStructureResponse.json();
+  state.course = courseStructureJ;
   const courseGeojson: geojson.GeoJSON = {
     type: 'LineString',
     coordinates: courseStructureJ.route.map((c) => {
@@ -138,8 +197,4 @@ async function addCourseToMap(map: Map) {
     source: 'course',
     type: 'line',
   });
-  const newCenter = center(courseGeojson);
-  const newCenterCoords = newCenter.geometry.coordinates;
-  map.setCenter(newCenterCoords as any)
 }
-
