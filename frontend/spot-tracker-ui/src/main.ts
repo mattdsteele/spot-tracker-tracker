@@ -1,4 +1,5 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
+import { formatRelative } from 'date-fns';
 import type * as geojson from 'geojson';
 import maplibregl, { Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -60,15 +61,15 @@ async function captureAnalytics() {
   const lngLat: [number, number] = [latest.longitude, latest.latitude]
   const point = turfPoint(lngLat);
   const snapped = nearestPointOnLine(line, point, { units: 'miles' });
-  console.log('nearest point', snapped);
-  console.log(`${snapped.properties.location} miles travelled`);
+  const roundedMiles = snapped.properties.location.toPrecision(4);
+  console.log(`${roundedMiles} miles travelled`);
   const t = new Date(latest.time);
-  console.log(`Posted at ${t.toISOString()}`);
+  const relativeTime = formatRelative(t, new Date());
   map.setCenter(lngLat);
 
   const template = `
-    <p>${snapped.properties.location} miles</p>
-    <p>Updated at ${t.toISOString()}
+    <p>${roundedMiles} miles</p>
+    <p>Posted ${relativeTime}</p>
   `
   new maplibregl.Popup({ closeOnClick: false })
     .setLngLat(lngLat)
@@ -77,7 +78,7 @@ async function captureAnalytics() {
 
 }
 async function addPointsToMap(map: Map) {
-  const daysToSearch = 10;
+  const daysToSearch = 3;
   const baseUrl =
     'https://ewymlkyn437zs2dlpep5royeea0jjrvk.lambda-url.us-east-2.on.aws/';
   const spotPings = await fetch(`${baseUrl}?days=${daysToSearch}`);
