@@ -1,7 +1,7 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
 import { formatRelative } from 'date-fns';
 import type * as geojson from 'geojson';
-import maplibregl, { LngLat, LngLatLike, Map } from 'maplibre-gl';
+import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { stops } from './stops';
 import './style.css';
