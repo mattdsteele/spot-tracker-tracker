@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ride Tracker</title>
-  </head>
-  <body>
-    <div id='map'></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ride Tracker</title>
+  <script src="~partytown/partytown.js"></script>
+  <script type="text/partytown" src="https://www.googletagmanager.com/gtag/js?id=G-S1BEXEF5TE"></script>
+  <script type="text/partytown">
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-S1BEXEF5TE');
+</script>
+</head>
+
+<body>
+  <div id='map'></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
