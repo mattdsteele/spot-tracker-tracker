@@ -1,0 +1,34 @@
+name: Netlify Deploy
+
+on:
+  workflow_dispatch:
+    branches: [main]
+  push:
+    paths:
+      - frontend/**
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 16
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - name: npm install, build
+        run: |
+          cd frontend/spot-tracker-ui
+          npm ci
+          npm run build
+      - name: Deploy to Netlify
+        uses: 'netlify/actions/cli@master'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{secrets.NETLIFY_ACCESS_TOKEN}}
+          NETLIFY_SITE_ID: ${{secrets.NETLIFY_SITE}}
+        with:
+          args: 'deploy -p --dir=frontend/spot-tracker-ui/dist'
