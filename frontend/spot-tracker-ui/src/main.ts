@@ -1,7 +1,7 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
 import { formatRelative } from 'date-fns';
 import type * as geojson from 'geojson';
-import maplibregl, { Map } from 'maplibre-gl';
+import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 
@@ -13,7 +13,7 @@ type Ping = {
 };
 type FenceDefinition = {
   'fence-name': string;
-  geometry: [number, number];
+  geometry: LngLatLike;
 };
   type course = {
     name: string;
@@ -35,11 +35,13 @@ const state: Partial<{
   course: course
 }> = { };
 
+// const omaha: LngLatLike  = [-95.98, 41.27695];
+const lincoln: LngLatLike = [-96.725463, 40.877181];
 const map = new maplibregl.Map({
   container: 'map',
   style:
     'https://api.maptiler.com/maps/streets/style.json?key=Co2mlew8NdTFIssVb1UW', // stylesheet location
-  center: [-95.98, 41.27695], // starting position [lng, lat]
+  center: lincoln, // starting position [lng, lat]
   zoom: 11, // starting zoom
 });
 
@@ -58,7 +60,7 @@ async function captureAnalytics() {
     state.course?.route?.map(({ latitude, longitude }) => [longitude, latitude])
   );
   const [latest] = state.pings;
-  const lngLat: [number, number] = [latest.longitude, latest.latitude]
+  const lngLat: LngLatLike = [latest.longitude, latest.latitude]
   const point = turfPoint(lngLat);
   const snapped = nearestPointOnLine(line, point, { units: 'miles' });
   const roundedMiles = snapped.properties.location.toPrecision(4);
