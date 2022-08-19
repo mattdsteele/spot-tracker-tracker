@@ -74,6 +74,24 @@ func UpdatePosition(cfg aws.Config, lon, lat float64, sampleTime time.Time) erro
 
 	return nil
 }
+func DeletePositions(cfg aws.Config) error {
+	client := location.NewFromConfig(cfg)
+	deleteRequest := &location.BatchDeleteDevicePositionHistoryInput{
+		DeviceIds:   aws.ToStringSlice([]*string{&DeviceId}),
+		TrackerName: aws.String(TrackerName),
+	}
+	output, err := client.BatchDeleteDevicePositionHistory(context.TODO(), deleteRequest)
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+	}
+	if len(output.Errors) > 0 {
+		fmt.Println("Output included error!")
+		fmt.Println(output.Errors)
+		return errors.New(fmt.Sprint(output.Errors))
+	}
+	return nil
+}
 func ListDevices(cfg aws.Config) []types.ListDevicePositionsResponseEntry {
 	client := location.NewFromConfig(cfg)
 	positions, err := client.ListDevicePositions(context.Background(), &location.ListDevicePositionsInput{
