@@ -13,3 +13,7 @@ body {
 .mapboxgl-popup-content p {
   margin: 0;
 }
+
+.mapboxgl-popup-content h3 {
+  margin: 0;
+}

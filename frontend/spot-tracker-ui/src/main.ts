@@ -1,8 +1,9 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
 import { formatRelative } from 'date-fns';
 import type * as geojson from 'geojson';
-import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
+import maplibregl, { LngLat, LngLatLike, Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { stops } from './stops';
 import './style.css';
 
 type Pings = Ping[];
@@ -29,10 +30,18 @@ type FenceDefinition = {
     longitude: number;
     name: string;
   };
+  type GeofenceTransition = {
+    eventType: string;
+    geofence: string;
+    deviceId: string;
+    eventTime: string;
+    location: LngLatLike;
+  };
 
 const state: Partial<{
   pings: Pings;
-  course: course
+  course: course;
+  transitions: GeofenceTransition[]
 }> = { };
 
 // const omaha: LngLatLike  = [-95.98, 41.27695];
@@ -50,6 +59,7 @@ map.on('load', async () => {
     addPointsToMap(map),
     addFencesToMap(map),
     addCourseToMap(map),
+    fetchTransitions(),
   ]).then(() => {
     console.log(state);
     captureAnalytics();
@@ -64,7 +74,6 @@ async function captureAnalytics() {
   const point = turfPoint(lngLat);
   const snapped = nearestPointOnLine(line, point, { units: 'miles' });
   const roundedMiles = snapped.properties.location.toPrecision(4);
-  console.log(`${roundedMiles} miles travelled`);
   const t = new Date(latest.time);
   const relativeTime = formatRelative(t, new Date());
   map.setCenter(lngLat);
@@ -94,7 +103,6 @@ async function addPointsToMap(map: Map) {
   state.pings = pings;
   const now = new Date().getTime();
   const latestPing = pings[0];
-  console.log('Latest ping', latestPing);
   const earliest = latestPing?.time;
   const mapValues = (
     x: number,
@@ -157,7 +165,7 @@ async function addFencesToMap(map: Map) {
     'https://6f7w2jqblnebkk75folo4zv7j40qvxfp.lambda-url.us-east-2.on.aws/'
   );
   const fencesJ: FenceDefinition[] = await fences.json();
-  const fencesG = {
+  const fencesG: geojson.FeatureCollection = {
     type: 'FeatureCollection',
     features: fencesJ.map((f) => {
       return {
@@ -166,8 +174,11 @@ async function addFencesToMap(map: Map) {
           type: 'Polygon',
           coordinates: f.geometry,
         },
+        properties: {
+          id: f['fence-name']
+        }
       };
-    }),
+    }) as any,
   };
 
   map.addSource('f', { type: 'geojson', data: fencesG });
@@ -179,6 +190,28 @@ async function addFencesToMap(map: Map) {
       'fill-color': '#088',
       'fill-opacity': 0.7,
     },
+  });
+
+  map.on('click', 'fences-layer', e => {
+    const {features, lngLat} = e;
+    const props = features[0].properties;
+    const {id} = props;
+    const stop = stops.find(x => x[0] === id);
+    const fenceTransitions = state.transitions.filter(x => x.geofence === id).sort((a, b) => a.eventTime < b.eventTime ? 1 : -1);
+    const fenceEnter = fenceTransitions.find(x => x.eventType === 'ENTER');
+    const fenceExit = fenceTransitions.find(x => x.eventType === 'EXIT');
+    let html = `<h3>${stop[1]}</h3>
+      <p>Mile: ${stop[2]}</p>`;
+    if (fenceEnter) {
+      html += `<p>Arrived ${formatRelative(new Date(fenceEnter.eventTime), new Date())}<p>`
+    }
+    if (fenceExit) {
+      html += `<p>Left ${formatRelative(new Date(fenceExit.eventTime), new Date())}<p>`
+    }
+    new maplibregl.Popup()
+      .setLngLat(lngLat)
+      .setHTML(html)
+      .addTo(map);
   });
 }
 
@@ -201,3 +234,11 @@ async function addCourseToMap(map: Map) {
     type: 'line',
   });
 }
+async function fetchTransitions() {
+  const getFenceTransitionsUrl =
+    'https://4kwgzt2ismy4nckqqptkfrjanq0upafr.lambda-url.us-east-2.on.aws/';
+  const res = await fetch(getFenceTransitionsUrl);
+  const transitions: GeofenceTransition[] = await res.json();
+  state.transitions = transitions;
+}
+
