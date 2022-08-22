@@ -1,5 +1,5 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
-import { formatRelative } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import type * as geojson from 'geojson';
 import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -43,6 +43,7 @@ const state: Partial<{
   course: course;
   transitions: GeofenceTransition[]
 }> = { };
+const zone = 'America/Chicago';
 
 // const omaha: LngLatLike  = [-95.98, 41.27695];
 const lincoln: LngLatLike = [-96.725463, 40.877181];
@@ -75,7 +76,7 @@ async function captureAnalytics() {
   const snapped = nearestPointOnLine(line, point, { units: 'miles' });
   const roundedMiles = snapped.properties.location.toPrecision(4);
   const t = new Date(latest.time);
-  const relativeTime = formatRelative(t, new Date());
+  const relativeTime = formatInTimeZone(t, zone, 'MM/dd HH:mm');
   map.setCenter(lngLat);
 
   const template = `
@@ -203,10 +204,10 @@ async function addFencesToMap(map: Map) {
     let html = `<h3>${stop[1]}</h3>
       <p>Mile: ${stop[2]}</p>`;
     if (fenceEnter) {
-      html += `<p>Arrived ${formatRelative(new Date(fenceEnter.eventTime), new Date())}<p>`
+      html += `<p>Arrived ${formatInTimeZone(new Date(fenceEnter.eventTime), zone, 'MM/dd HH:mm')}<p>`
     }
     if (fenceExit) {
-      html += `<p>Left ${formatRelative(new Date(fenceExit.eventTime), new Date())}<p>`
+      html += `<p>Left ${formatInTimeZone(new Date(fenceExit.eventTime), zone, 'MM/dd HH:mm')}<p>`
     }
     new maplibregl.Popup()
       .setLngLat(lngLat)
@@ -217,7 +218,7 @@ async function addFencesToMap(map: Map) {
 
 async function addCourseToMap(map: Map) {
   const getCourseStructureUrl =
-    'https://galw5wepzdonotejavrka3zrqm0zmnwb.lambda-url.us-east-2.on.aws/';
+     'https://galw5wepzdonotejavrka3zrqm0zmnwb.lambda-url.us-east-2.on.aws/';
   const getCourseStructureResponse = await fetch(getCourseStructureUrl);
   const courseStructureJ: course = await getCourseStructureResponse.json();
   state.course = courseStructureJ;
@@ -236,7 +237,7 @@ async function addCourseToMap(map: Map) {
 }
 async function fetchTransitions() {
   const getFenceTransitionsUrl =
-    'https://4kwgzt2ismy4nckqqptkfrjanq0upafr.lambda-url.us-east-2.on.aws/';
+  'https://4kwgzt2ismy4nckqqptkfrjanq0upafr.lambda-url.us-east-2.on.aws/';
   const res = await fetch(getFenceTransitionsUrl);
   const transitions: GeofenceTransition[] = await res.json();
   state.transitions = transitions;

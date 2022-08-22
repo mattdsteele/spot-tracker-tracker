@@ -1,8 +1,6 @@
-name: Netlify Deploy
+name: Netlify Branch Deploy
 
 on:
-  workflow_dispatch:
-    branches: [main]
   push:
     paths:
       - frontend/**
@@ -30,5 +28,6 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{secrets.NETLIFY_ACCESS_TOKEN}}
           NETLIFY_SITE_ID: ${{secrets.NETLIFY_SITE}}
+          BRANCH_ALIAS: ${{env.GITHUB_REF_NAME}}
         with:
-          args: 'deploy -p --dir=frontend/spot-tracker-ui/dist --alias=${{env.BRANCH_NAME}}'
+          args: "deploy --dir=frontend/spot-tracker-ui/dist --alias 2022-gw"
