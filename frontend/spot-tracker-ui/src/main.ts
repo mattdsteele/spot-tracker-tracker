@@ -91,7 +91,7 @@ async function captureAnalytics() {
 async function addPointsToMap(map: Map) {
   const daysToSearch = 3;
   const baseUrl =
-    'https://ewymlkyn437zs2dlpep5royeea0jjrvk.lambda-url.us-east-2.on.aws/';
+    '/services/recent-pings.json';
   const spotPings = await fetch(`${baseUrl}?days=${daysToSearch}`);
   let spotPingsJson: Pings = await spotPings.json();
   const pings = spotPingsJson
@@ -162,7 +162,7 @@ async function addPointsToMap(map: Map) {
 
 async function addFencesToMap(map: Map) {
   const fences = await fetch(
-    'https://6f7w2jqblnebkk75folo4zv7j40qvxfp.lambda-url.us-east-2.on.aws/'
+    '/services/geofences.json'
   );
   const fencesJ: FenceDefinition[] = await fences.json();
   const fencesG: geojson.FeatureCollection = {
@@ -217,7 +217,7 @@ async function addFencesToMap(map: Map) {
 
 async function addCourseToMap(map: Map) {
   const getCourseStructureUrl =
-    'https://galw5wepzdonotejavrka3zrqm0zmnwb.lambda-url.us-east-2.on.aws/';
+    '/services/course.json';
   const getCourseStructureResponse = await fetch(getCourseStructureUrl);
   const courseStructureJ: course = await getCourseStructureResponse.json();
   state.course = courseStructureJ;
@@ -236,7 +236,7 @@ async function addCourseToMap(map: Map) {
 }
 async function fetchTransitions() {
   const getFenceTransitionsUrl =
-    'https://4kwgzt2ismy4nckqqptkfrjanq0upafr.lambda-url.us-east-2.on.aws/';
+    '/services/geofence-transitions.json';
   const res = await fetch(getFenceTransitionsUrl);
   const transitions: GeofenceTransition[] = await res.json();
   state.transitions = transitions;
