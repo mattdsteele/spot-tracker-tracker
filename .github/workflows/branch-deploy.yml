@@ -1,8 +1,6 @@
 name: Netlify Branch Deploy
 
 on:
-  workflow_dispatch:
-    branches: [main]
   push:
     paths:
       - frontend/**

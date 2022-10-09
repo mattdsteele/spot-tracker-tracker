@@ -1,5 +1,5 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
-import { formatRelative } from 'date-fns';
+import { format } from 'date-fns';
 import type * as geojson from 'geojson';
 import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -75,7 +75,7 @@ async function captureAnalytics() {
   const snapped = nearestPointOnLine(line, point, { units: 'miles' });
   const roundedMiles = snapped.properties.location.toPrecision(4);
   const t = new Date(latest.time);
-  const relativeTime = formatRelative(t, new Date());
+  const relativeTime = format(t, 'MM/dd hh:mm');
   map.setCenter(lngLat);
 
   const template = `
@@ -203,10 +203,10 @@ async function addFencesToMap(map: Map) {
     let html = `<h3>${stop[1]}</h3>
       <p>Mile: ${stop[2]}</p>`;
     if (fenceEnter) {
-      html += `<p>Arrived ${formatRelative(new Date(fenceEnter.eventTime), new Date())}<p>`
+      html += `<p>Arrived ${format(new Date(fenceEnter.eventTime), 'MM/dd hh:mm')}<p>`
     }
     if (fenceExit) {
-      html += `<p>Left ${formatRelative(new Date(fenceExit.eventTime), new Date())}<p>`
+      html += `<p>Left ${format(new Date(fenceExit.eventTime), 'MM/dd hh:mm')}<p>`
     }
     new maplibregl.Popup()
       .setLngLat(lngLat)
