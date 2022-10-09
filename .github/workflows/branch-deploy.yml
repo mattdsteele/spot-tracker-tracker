@@ -1,4 +1,4 @@
-name: Netlify Deploy
+name: Netlify Branch Deploy
 
 on:
   workflow_dispatch:
