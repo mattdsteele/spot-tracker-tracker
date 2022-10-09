@@ -1,5 +1,5 @@
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import type * as geojson from 'geojson';
 import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -43,6 +43,7 @@ const state: Partial<{
   course: course;
   transitions: GeofenceTransition[]
 }> = { };
+const zone = 'America/Chicago';
 
 // const omaha: LngLatLike  = [-95.98, 41.27695];
 const lincoln: LngLatLike = [-96.725463, 40.877181];
@@ -75,7 +76,7 @@ async function captureAnalytics() {
   const snapped = nearestPointOnLine(line, point, { units: 'miles' });
   const roundedMiles = snapped.properties.location.toPrecision(4);
   const t = new Date(latest.time);
-  const relativeTime = format(t, 'MM/dd hh:mm');
+  const relativeTime = formatInTimeZone(t, zone, 'MM/dd HH:mm');
   map.setCenter(lngLat);
 
   const template = `
@@ -203,10 +204,10 @@ async function addFencesToMap(map: Map) {
     let html = `<h3>${stop[1]}</h3>
       <p>Mile: ${stop[2]}</p>`;
     if (fenceEnter) {
-      html += `<p>Arrived ${format(new Date(fenceEnter.eventTime), 'MM/dd hh:mm')}<p>`
+      html += `<p>Arrived ${formatInTimeZone(new Date(fenceEnter.eventTime), zone, 'MM/dd HH:mm')}<p>`
     }
     if (fenceExit) {
-      html += `<p>Left ${format(new Date(fenceExit.eventTime), 'MM/dd hh:mm')}<p>`
+      html += `<p>Left ${formatInTimeZone(new Date(fenceExit.eventTime), zone, 'MM/dd HH:mm')}<p>`
     }
     new maplibregl.Popup()
       .setLngLat(lngLat)
