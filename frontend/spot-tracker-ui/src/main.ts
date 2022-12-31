@@ -95,12 +95,21 @@ async function addPointsToMap(map: Map) {
     '/services/recent-pings.json';
   const spotPings = await fetch(`${baseUrl}?days=${daysToSearch}`);
   let spotPingsJson: Pings = await spotPings.json();
-  const pings = spotPingsJson
+  let pings = spotPingsJson
     .map((r) => ({
       ...r,
       time: new Date(r.time).getTime(),
     }))
     .sort((a, b) => (a.time < b.time ? 1 : -1));
+
+  // Filter based on query params
+  const fromUrl = 'from';
+  const params = new URLSearchParams(window.location.search);
+  if (params.has(fromUrl)) {
+    const fromTime = parseInt(params.get(fromUrl));
+    pings = pings.filter(p => p.time < fromTime);
+  }
+
   state.pings = pings;
   const now = new Date().getTime();
   const latestPing = pings[0];
