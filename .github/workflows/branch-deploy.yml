@@ -30,4 +30,4 @@ jobs:
           NETLIFY_SITE_ID: ${{secrets.NETLIFY_SITE}}
           BRANCH_ALIAS: ${{env.GITHUB_REF_NAME}}
         with:
-          args: "deploy --dir=frontend/spot-tracker-ui/dist --alias 2022-gw"
+          args: "deploy --dir=frontend/spot-tracker-ui/dist --alias preview"

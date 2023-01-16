@@ -36,7 +36,7 @@ const getTimestamps = () => {
   const page = await browser.newPage();
   const times = getTimestamps();
   for (let from of times) {
-    await page.goto(`http://localhost:5173?from=${from}`);
+    await page.goto(`http://localhost:5173?from=${from}&course=2022-gw`);
     await page.waitForSelector("#map .mapboxgl-popup-content");
     await page.screenshot({
       type: "png",
