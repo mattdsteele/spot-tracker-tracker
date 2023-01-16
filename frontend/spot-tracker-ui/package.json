@@ -10,10 +10,10 @@
   "devDependencies": {
     "rollup-plugin-visualizer": "^5.7.1",
     "typescript": "^4.5.4",
-    "vite": "^3.0.7"
+    "vite": "^4.0.4"
   },
   "dependencies": {
-    "@builder.io/partytown": "^0.6.4",
+    "@builder.io/partytown": "^0.7.4",
     "@turf/turf": "^6.5.0",
     "@types/geojson": "^7946.0.8",
     "date-fns": "^2.29.1",
