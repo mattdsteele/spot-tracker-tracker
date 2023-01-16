@@ -42,6 +42,7 @@ const state: Partial<{
   pings: Pings;
   course: course;
   transitions: GeofenceTransition[];
+}> = {};
 const zone = 'America/Chicago';
 
 // const omaha: LngLatLike  = [-95.98, 41.27695];
