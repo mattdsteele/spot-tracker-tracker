@@ -10,7 +10,7 @@
   "devDependencies": {
     "rollup-plugin-visualizer": "^5.7.1",
     "typescript": "^4.5.4",
-    "vite": "^3.0.7"
+    "vite": "^4.0.4"
   },
   "dependencies": {
     "@builder.io/partytown": "^0.6.4",
