@@ -1,42 +1,13 @@
+import type { ApiUrls, course, FenceDefinition, GeofenceTransition, Pings } from './types';
+import type * as geojson from 'geojson';
+
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
 import { formatInTimeZone } from 'date-fns-tz';
-import type * as geojson from 'geojson';
 import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { stops } from './stops';
-import './style.css';
 
-type Pings = Ping[];
-type Ping = {
-  latitude: number;
-  longitude: number;
-  time: number;
-};
-type FenceDefinition = {
-  'fence-name': string;
-  geometry: LngLatLike;
-};
-type course = {
-  name: string;
-  route: point[];
-  pointsOfInterest: pointsOfInterest[];
-};
-type point = {
-  latitude: number;
-  longitude: number;
-};
-type pointsOfInterest = {
-  latitude: number;
-  longitude: number;
-  name: string;
-};
-type GeofenceTransition = {
-  eventType: string;
-  geofence: string;
-  deviceId: string;
-  eventTime: string;
-  location: LngLatLike;
-};
+import 'maplibre-gl/dist/maplibre-gl.css';
+import './style.css';
 
 const state: Partial<{
   pings: Pings;
@@ -54,13 +25,6 @@ const map = new maplibregl.Map({
   center: lincoln, // starting position [lng, lat]
   zoom: 11, // starting zoom
 });
-
-type ApiUrls = {
-  course: string;
-  pings: string;
-  transitions: string;
-  geofences: string;
-};
 
 const defaultApiUrls: ApiUrls = {
   course:
