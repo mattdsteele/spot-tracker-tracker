@@ -1,9 +1,9 @@
 import type { ApiUrls, course, FenceDefinition, GeofenceTransition, Pings } from './types';
 import type * as geojson from 'geojson';
+import type { LngLatLike, Map } from 'maplibre-gl';
 
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
 import { formatInTimeZone } from 'date-fns-tz';
-import maplibregl, { LngLatLike, Map } from 'maplibre-gl';
 import { stops } from './stops';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -18,13 +18,6 @@ const zone = 'America/Chicago';
 
 // const omaha: LngLatLike  = [-95.98, 41.27695];
 const lincoln: LngLatLike = [-96.725463, 40.877181];
-const map = new maplibregl.Map({
-  container: 'map',
-  style:
-    'https://api.maptiler.com/maps/streets/style.json?key=Co2mlew8NdTFIssVb1UW', // stylesheet location
-  center: lincoln, // starting position [lng, lat]
-  zoom: 11, // starting zoom
-});
 
 const defaultApiUrls: ApiUrls = {
   course:
@@ -59,18 +52,28 @@ const endpoints = getEndpoints();
 const fromUrl = 'from';
 const params = new URLSearchParams(window.location.search);
 
-map.on('load', async () => {
-  Promise.all([
-    addPointsToMap(map),
-    addFencesToMap(map),
-    addCourseToMap(map),
-    fetchTransitions(),
-  ]).then(() => {
-    console.log(state);
-    captureAnalytics();
+(async () => {
+  const maplibregl = await import('maplibre-gl');
+  const map = new maplibregl.Map({
+    container: 'map',
+    style:
+      'https://api.maptiler.com/maps/streets/style.json?key=Co2mlew8NdTFIssVb1UW', // stylesheet location
+    center: lincoln, // starting position [lng, lat]
+    zoom: 11, // starting zoom
   });
-});
-async function captureAnalytics() {
+  map.on('load', async () => {
+    Promise.all([
+      addPointsToMap(map),
+      addFencesToMap(map, maplibregl),
+      addCourseToMap(map),
+      fetchTransitions(),
+    ]).then(() => {
+      console.log(state);
+      captureAnalytics(map, maplibregl);
+    });
+  });
+})();
+async function captureAnalytics(map: Map, maplibregl: any) {
   const line = lineString(
     state.course?.route?.map(({ latitude, longitude }) => [longitude, latitude])
   );
@@ -169,7 +172,7 @@ async function addPointsToMap(map: Map) {
   });
 }
 
-async function addFencesToMap(map: Map) {
+async function addFencesToMap(map: Map, maplibregl: any) {
   const fences = await fetch(endpoints.geofences);
   const fencesJ: FenceDefinition[] = await fences.json();
   const fencesG: geojson.FeatureCollection = {
