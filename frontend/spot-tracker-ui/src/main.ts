@@ -68,7 +68,7 @@ const defaultApiUrls: ApiUrls = {
   pings:
     'https://ewymlkyn437zs2dlpep5royeea0jjrvk.lambda-url.us-east-2.on.aws/',
   transitions:
-    'https://galw5wepzdonotejavrka3zrqm0zmnwb.lambda-url.us-east-2.on.aws/',
+    'https://4kwgzt2ismy4nckqqptkfrjanq0upafr.lambda-url.us-east-2.on.aws/',
   geofences:
     'https://6f7w2jqblnebkk75folo4zv7j40qvxfp.lambda-url.us-east-2.on.aws/',
 };
