@@ -2,7 +2,7 @@ import { LaunchOptions } from "playwright";
 import { chromium } from "playwright-extra";
 // https://www.npmjs.com/package/@sparticuz/chromium
 
-const ENABLE = process.env.CASEYS_ENABLE || "false";
+const ENABLED = process.env.CASEYS_ENABLE || "false";
 // Load the stealth plugin and use defaults (all tricks to hide playwright usage)
 // Note: playwright-extra is compatible with most puppeteer-extra plugins
 const stealth = require("puppeteer-extra-plugin-stealth")();
@@ -17,7 +17,13 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
   const { page, browser } = await launch(options);
   console.log("launched");
 
+  await page.goto("https://caseys.com");
+
+  await login();
+  await page.waitForLoadState('domcontentloaded');
   await startOrder(order.zip, order.time);
+  await clearExistingCart();
+  await openMenu();
 
   await orderCustomPizza();
   //   await orderTacoPizza();
@@ -26,7 +32,7 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
   await checkout();
 
   // Actually submit the order
-  if (ENABLE === "true") {
+  if (ENABLED === "true") {
     // Ugly but it works
     await page
       .locator(
@@ -37,6 +43,10 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
 
   console.log("All done, check the screenshot. ✨");
   await browser.close();
+
+  async function openMenu() {
+    await page.locator('a', { hasText: 'Menu' }).first().click();
+  }
 
   async function orderTacoPizza() {
     await page
@@ -141,25 +151,30 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
 
     await page.getByRole("link", { name: "Checkout" }).first().click();
 
-    const { CASEYS_EMAIL, CASEYS_PASSWORD, CASEYS_CVV } = process.env;
+    const { CASEYS_CVV } = process.env;
 
-    await page.locator('input[name="username"]').first().type(CASEYS_EMAIL!);
-    await page.locator('input[name="password"]').first().type(CASEYS_PASSWORD!);
+    // await page.locator('input[name="username"]').first().type(CASEYS_EMAIL!);
+    // await page.locator('input[name="password"]').first().type(CASEYS_PASSWORD!);
 
-    await page.locator("#btn_customized_sign_in").click();
-    await page
-      .locator('[data-automation-id="checkoutButton"]:visible')
-      .first()
-      .click();
+    // await page.locator("#btn_customized_sign_in").click();
+
+    // await page
+    //   .locator('[data-automation-id="checkoutButton"]:visible')
+    //   .first()
+    //   .click();
+
     await page.getByLabel("CVV").type(CASEYS_CVV!);
   }
 
   async function startOrder(zip: string, time: string) {
-    await page.goto("https://caseys.com");
     await page.locator('[data-automation-id="carryout"]').click();
     const searchField = page.locator(
       '[data-automation-id="addressSearchField"]',
     );
+    const foundSearchField = (await searchField.count() === 1)
+    if (!foundSearchField) {
+      console.log('did not find search field');
+    }
     await searchField.type(zip);
     await page.waitForSelector(".pac-container");
     await searchField.press("Enter");
@@ -173,6 +188,30 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
       .selectOption(time);
     await store.locator('[data-automation-id="startOrderButton"]').click();
   }
+
+  async function login() {
+    await page.locator('[data-automation-id="navLink2"]').filter({ hasText: "Sign in" }).first().click();
+    const { CASEYS_EMAIL, CASEYS_PASSWORD } = process.env;
+
+    await page.locator('input[name="username"]').first().type(CASEYS_EMAIL!);
+    await page.locator('input[name="password"]').first().type(CASEYS_PASSWORD!);
+
+    await page.locator("#btn_customized_sign_in").click();
+  }
+
+  async function clearExistingCart() {
+    await page.locator('[data-automation-id="desktopCartLink"]').click();
+    let emptyCart = false;
+    while (!emptyCart) {
+      const number = await page.locator('.pb-3', { hasText: 'There are no items in your order.' }).count()
+      if (number === 1) {
+        emptyCart = true;
+      } else {
+        await page.locator('[data-automation-id="removeProductButton"]').first().click();
+      }
+    }
+  }
+
 }
 async function launch(options: LaunchOptions) {
   console.log("in main fn");
@@ -184,5 +223,8 @@ async function launch(options: LaunchOptions) {
   const page = await browser.newPage();
   page.setViewportSize({ width: 1920, height: 1080 });
   console.log("after new page");
+
   return { page, browser };
 }
+
+
