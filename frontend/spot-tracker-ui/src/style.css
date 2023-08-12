@@ -10,10 +10,10 @@ body {
   height: 100%;
 }
 
-.mapboxgl-popup-content p {
+.maplibregl-popup-content p {
   margin: 0;
 }
 
-.mapboxgl-popup-content h3 {
+.maplibregl-popup-content h3 {
   margin: 0;
 }
