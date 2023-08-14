@@ -167,14 +167,8 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
   }
 
   async function startOrder(zip: string, time: string) {
-    await page.locator('[data-automation-id="carryout"]').click();
-    const searchField = page.locator(
-      '[data-automation-id="addressSearchField"]',
-    );
-    const foundSearchField = (await searchField.count() === 1)
-    if (!foundSearchField) {
-      console.log('did not find search field');
-    }
+    await page.waitForLoadState('load');
+    const searchField = await findSearchFieldWithRetries(3);
     await searchField.type(zip);
     await page.waitForSelector(".pac-container");
     await searchField.press("Enter");
@@ -187,6 +181,22 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
       .locator('[data-automation-id="orderTimeSelect"]')
       .selectOption(time);
     await store.locator('[data-automation-id="startOrderButton"]').click();
+
+    async function findSearchFieldWithRetries(retries: number) {
+      if (retries === 0) {
+        throw new Error('failed to find search field after 3 retries')
+      }
+      await page.locator('[data-automation-id="carryout"]').click();
+      const searchField = page.locator(
+        '[data-automation-id="addressSearchField"]'
+      ).locator('visible=true');
+      const foundSearchField = (await searchField.count() === 1);
+      if (!foundSearchField) {
+        console.log('failed to find search field, on retry ', retries)
+        return findSearchFieldWithRetries(retries-1);
+      }
+      return searchField;
+    }
   }
 
   async function login() {
