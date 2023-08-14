@@ -60,6 +60,7 @@ export const handler: Handler = async (
   const { detail } = event;
 
   if (!shouldTriggerEvent(detail)) {
+    console.log('Did not match pizza criteria, returning')
     return {
       statusCode: 200,
       body: JSON.stringify({ message: "Did not trigger event" }),
@@ -70,8 +71,7 @@ export const handler: Handler = async (
     { time: CASEYS_TIME!, zip: CASEYS_ZIP! },
     {
       args,
-      headless: true,
-      executablePath: chromium.executablePath(),
+      headless: true
     },
   );
   return {

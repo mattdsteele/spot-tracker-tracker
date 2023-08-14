@@ -51,11 +51,15 @@ func GetTrackerPositionHistory(cfg aws.Config, daysBack int) ([]types.DevicePosi
 }
 
 func UpdatePosition(cfg aws.Config, lon, lat float64, sampleTime time.Time) error {
+	return UpdatePositionWithDeviceId(cfg, lon, lat, sampleTime, DeviceId)
+}
+
+func UpdatePositionWithDeviceId(cfg aws.Config, lon, lat float64, sampleTime time.Time, deviceId string) error {
 	client := location.NewFromConfig(cfg)
 	positionInput := &location.BatchUpdateDevicePositionInput{
 		TrackerName: aws.String(TrackerName),
 		Updates: []types.DevicePositionUpdate{{
-			DeviceId:   aws.String(DeviceId),
+			DeviceId:   aws.String(deviceId),
 			SampleTime: aws.Time(sampleTime),
 			Position:   []float64{lon, lat},
 		}},
@@ -67,7 +71,11 @@ func UpdatePosition(cfg aws.Config, lon, lat float64, sampleTime time.Time) erro
 	}
 	if len(output.Errors) > 0 {
 		fmt.Println("Output included error!")
-		fmt.Println(output.Errors)
+		for _, err := range output.Errors {
+			fmt.Println((err.DeviceId))
+			fmt.Println(err.Error.Code)
+			fmt.Println(err.Error.Message)
+		}
 		return errors.New(fmt.Sprint(output.Errors))
 	}
 	fmt.Printf("Saved position %f,%f at %s\n", lon, lat, sampleTime.Format(time.RFC3339))

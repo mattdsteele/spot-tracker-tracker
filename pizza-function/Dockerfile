@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:focal as build-image
+FROM mcr.microsoft.com/playwright:v1.37.0-focal as build-image
 
 # Install aws-lambda-ric build dependencies
 RUN apt-get update && apt-get install -y \
