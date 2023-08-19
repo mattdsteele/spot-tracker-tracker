@@ -29,5 +29,4 @@ func main() {
 
 	spot.UpdatePositionWithDeviceId(cfg, lon, lat, sampleTime, deviceId)
 	fmt.Printf("Updated fake tracker. %d\n", isAtHome)
-
 }
