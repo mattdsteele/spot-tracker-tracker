@@ -15,7 +15,6 @@ import (
 func main() {
 	lambda.Start(func(ctx context.Context, event events.CloudWatchEvent) {
 		fmt.Println("got an event")
-		fmt.Println(event)
 		var d = new(spot.FenceTransitionDetails)
 		err := json.Unmarshal(event.Detail, d)
 		if err != nil {

@@ -14,7 +14,7 @@ import (
 
 func main() {
 	lambda.Start(func(ctx context.Context, event events.CloudWatchEvent) {
-		var d = new(spot.FenceTransitionDetails)
+		var d = new(spot.GeofenceTransitionEvent)
 		err := json.Unmarshal(event.Detail, d)
 		if err != nil {
 			log.Fatalln("error ", err)

@@ -13,6 +13,7 @@ func main() {
 	fmt.Println("Hello")
 	cfg, _ := config.LoadDefaultConfig(context.Background())
 	peanut := []float64{41.274247, -95.990457}
+	// ww := []float64{40.869963, -96.139978}
 	home := []float64{41.276497, -95.988033}
 
 	isAtHome := false

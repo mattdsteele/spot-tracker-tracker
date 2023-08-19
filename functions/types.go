@@ -31,6 +31,14 @@ type Message struct {
 	Altitude     int     `json:"altitude"`
 }
 
+type GeofenceTransitionEvent struct {
+	EventType string    `json:"EventType"`
+	Geofence  string    `json:"GeofenceId"`
+	DeviceId  string    `json:"DeviceId"`
+	EventTime string    `json:"SampleTime"`
+	Location  []float64 `json:"Position"`
+}
+
 type FenceTransitionDetails struct {
 	EventType string    `json:"eventType"`
 	Geofence  string    `json:"geofence"`
