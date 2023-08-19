@@ -1,0 +1,20 @@
+{
+  "name": "GW Tracking",
+  "short_name": "GW Tracking",
+  "description": "GW Tracking",
+  "display": "standalone",
+  "start_url": ".",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "https://cdn.glitch.global/dd407dbf-7831-49fe-8d46-5850a8d175f9/192x192.png?v=1692327181065",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn.glitch.global/dd407dbf-7831-49fe-8d46-5850a8d175f9/512x512.png?v=1692327190906",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
