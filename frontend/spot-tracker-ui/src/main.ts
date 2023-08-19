@@ -63,7 +63,7 @@ const params = new URLSearchParams(window.location.search);
   const map = new maplibregl.Map({
     container: 'map',
     style:
-      'https://api.maptiler.com/maps/streets/style.json?key=Co2mlew8NdTFIssVb1UW', // stylesheet location
+      'https://api.maptiler.com/maps/basic/style.json?key=Co2mlew8NdTFIssVb1UW', // stylesheet location
     center: lincoln, // starting position [lng, lat]
     zoom: 11, // starting zoom
   });
