@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/haversine": "^1.1.5",
     "prettier": "^3.0.2",
     "rollup-plugin-visualizer": "^5.7.1",
     "typescript": "^5",
@@ -20,6 +21,7 @@
     "@types/geojson": "^7946.0.8",
     "date-fns": "^2.29.1",
     "date-fns-tz": "^2",
+    "haversine": "^1.1.1",
     "maplibre-gl": "^3"
   }
 }

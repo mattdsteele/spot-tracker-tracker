@@ -6,7 +6,8 @@ import type {
   Pings,
 } from './types';
 import type * as geojson from 'geojson';
-import type { LngLatLike, Map } from 'maplibre-gl';
+import { GeoJSONSource, LngLatLike, Map, Popup } from 'maplibre-gl';
+import haversine from 'haversine';
 
 import { lineString, nearestPointOnLine, point as turfPoint } from '@turf/turf';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -19,6 +20,7 @@ const state: Partial<{
   pings: Pings;
   course: course;
   transitions: GeofenceTransition[];
+  popup: Popup;
 }> = {};
 const zone = 'America/Chicago';
 
@@ -70,16 +72,29 @@ const params = new URLSearchParams(window.location.search);
   map.on('load', async () => {
     Promise.all([
       addPointsToMap(map),
-      addFencesToMap(map, maplibregl),
+      addFencesToMap(map),
       addCourseToMap(map),
       fetchTransitions(),
     ]).then(() => {
       console.log(state);
-      captureAnalytics(map, maplibregl);
+      captureAnalytics(map);
     });
   });
+
+  document.querySelector('.refresh').addEventListener('click', () => {
+    reloadContent(map);
+  });
 })();
-async function captureAnalytics(map: Map, maplibregl: any) {
+
+async function reloadContent(map: Map) {
+  const pings = await getPings();
+  state.pings = pings;
+  const geojson = pingsAsGeojson(pings);
+  (map.getSource('p') as GeoJSONSource).setData(geojson);
+  captureAnalytics(map);
+}
+
+async function captureAnalytics(map: Map) {
   const line = lineString(
     state.course?.route?.map(({ latitude, longitude }) => [
       longitude,
@@ -93,61 +108,34 @@ async function captureAnalytics(map: Map, maplibregl: any) {
   const roundedMiles = snapped.properties.location.toPrecision(4);
   const t = new Date(latest.time);
   const relativeTime = formatInTimeZone(t, zone, 'MM/dd HH:mm');
-  map.setCenter(lngLat);
+  map.panTo(lngLat);
 
-  const template = `
+  const [snappedLon, snappedLat] = snapped.geometry.coordinates;
+  const distanceFromSnappedPoint = haversine({ longitude: latest.longitude, latitude: latest.latitude }, { longitude: snappedLon, latitude: snappedLat }, { unit: 'mile' })
+
+  let template: string;
+  if (distanceFromSnappedPoint < 1) {
+    template = `
     <p>${roundedMiles} miles</p>
     <p>Posted ${relativeTime}</p>
   `;
-  new maplibregl.Popup({ closeOnClick: false })
+  } else {
+    template = `<p>Posted ${relativeTime}</p>`;
+  }
+  
+  if (state.popup?.isOpen()) {
+    state.popup.remove();
+  }
+  const popup = new Popup({ closeOnClick: false })
     .setLngLat(lngLat)
     .setHTML(template)
     .addTo(map);
+  state.popup = popup;
 }
 async function addPointsToMap(map: Map) {
-  const daysToSearch = 3;
-  const baseUrl = endpoints.pings;
-  const spotPings = await fetch(`${baseUrl}?days=${daysToSearch}`);
-  let spotPingsJson: Pings = await spotPings.json();
-  let pings = spotPingsJson
-    .map((r) => ({
-      ...r,
-      time: new Date(r.time).getTime(),
-    }))
-    .sort((a, b) => (a.time < b.time ? 1 : -1));
-
-  if (params.has(fromUrl)) {
-    const fromTime = parseInt(params.get(fromUrl));
-    pings = pings.filter((p) => p.time < fromTime);
-  }
-
+  let pings = await getPings();
   state.pings = pings;
-  const now = new Date().getTime();
-  const latestPing = pings[0];
-  const earliest = latestPing?.time;
-  const mapValues = (
-    x: number,
-    in_min: number,
-    in_max: number,
-    out_min: number,
-    out_max: number,
-  ) => ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
-  const geojson: GeoJSON.FeatureCollection = {
-    type: 'FeatureCollection',
-    features: pings.map((r) => {
-      return {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [r.longitude, r.latitude],
-        },
-        properties: {
-          opacity: mapValues(r.time, earliest, now, 0.1, 1),
-          latest: r.time === latestPing.time ? 'true' : 'false',
-        },
-      };
-    }),
-  };
+  const geojson: GeoJSON.FeatureCollection = pingsAsGeojson(pings);
   map.addSource('p', { type: 'geojson', data: geojson });
   map.addLayer({
     id: 'points-layer',
@@ -179,9 +167,57 @@ async function addPointsToMap(map: Map) {
       // "circle-opacity": ["get", "opacity"],
     },
   });
+
+}
+async function getPings() {
+  const daysToSearch = 3;
+  const baseUrl = endpoints.pings;
+  const spotPings = await fetch(`${baseUrl}?days=${daysToSearch}`);
+  let spotPingsJson: Pings = await spotPings.json();
+  let pings = spotPingsJson
+    .map((r) => ({
+      ...r,
+      time: new Date(r.time).getTime(),
+    }))
+    .sort((a, b) => (a.time < b.time ? 1 : -1));
+
+  if (params.has(fromUrl)) {
+    const fromTime = parseInt(params.get(fromUrl));
+    pings = pings.filter((p) => p.time < fromTime);
+  }
+  return pings;
+}
+function pingsAsGeojson(pings: Pings) {
+  const now = new Date().getTime();
+  const latestPing = pings[0];
+  const earliest = latestPing?.time;
+  const mapValues = (
+    x: number,
+    in_min: number,
+    in_max: number,
+    out_min: number,
+    out_max: number
+  ) => ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
+  const geojson: GeoJSON.FeatureCollection = {
+    type: 'FeatureCollection',
+    features: pings.map((r) => {
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [r.longitude, r.latitude],
+        },
+        properties: {
+          opacity: mapValues(r.time, earliest, now, 0.1, 1),
+          latest: r.time === latestPing.time ? 'true' : 'false',
+        },
+      };
+    }),
+  };
+  return geojson;
 }
 
-async function addFencesToMap(map: Map, maplibregl: any) {
+async function addFencesToMap(map: Map) {
   const fences = await fetch(endpoints.geofences);
   const fencesJ: FenceDefinition[] = await fences.json();
   const fencesG: geojson.FeatureCollection = {
@@ -237,7 +273,7 @@ async function addFencesToMap(map: Map, maplibregl: any) {
         'MM/dd HH:mm',
       )}<p>`;
     }
-    new maplibregl.Popup().setLngLat(lngLat).setHTML(html).addTo(map);
+    new Popup().setLngLat(lngLat).setHTML(html).addTo(map);
   });
 }
 
