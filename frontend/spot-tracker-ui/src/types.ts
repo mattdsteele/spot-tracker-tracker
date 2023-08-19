@@ -1,4 +1,4 @@
-import type { LngLatLike } from "maplibre-gl";
+import type { LngLatLike } from 'maplibre-gl';
 
 export type ApiUrls = {
   course: string;

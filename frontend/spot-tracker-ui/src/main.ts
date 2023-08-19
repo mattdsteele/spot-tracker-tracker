@@ -1,4 +1,10 @@
-import type { ApiUrls, course, FenceDefinition, GeofenceTransition, Pings } from './types';
+import type {
+  ApiUrls,
+  course,
+  FenceDefinition,
+  GeofenceTransition,
+  Pings,
+} from './types';
 import type * as geojson from 'geojson';
 import type { LngLatLike, Map } from 'maplibre-gl';
 
@@ -75,7 +81,10 @@ const params = new URLSearchParams(window.location.search);
 })();
 async function captureAnalytics(map: Map, maplibregl: any) {
   const line = lineString(
-    state.course?.route?.map(({ latitude, longitude }) => [longitude, latitude])
+    state.course?.route?.map(({ latitude, longitude }) => [
+      longitude,
+      latitude,
+    ]),
   );
   const [latest] = state.pings;
   const lngLat: LngLatLike = [latest.longitude, latest.latitude];
@@ -121,7 +130,7 @@ async function addPointsToMap(map: Map) {
     in_min: number,
     in_max: number,
     out_min: number,
-    out_max: number
+    out_max: number,
   ) => ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
   const geojson: GeoJSON.FeatureCollection = {
     type: 'FeatureCollection',
@@ -218,14 +227,14 @@ async function addFencesToMap(map: Map, maplibregl: any) {
       html += `<p>Arrived ${formatInTimeZone(
         new Date(fenceEnter.eventTime),
         zone,
-        'MM/dd HH:mm'
+        'MM/dd HH:mm',
       )}<p>`;
     }
     if (fenceExit) {
       html += `<p>Left ${formatInTimeZone(
         new Date(fenceExit.eventTime),
         zone,
-        'MM/dd HH:mm'
+        'MM/dd HH:mm',
       )}<p>`;
     }
     new maplibregl.Popup().setLngLat(lngLat).setHTML(html).addTo(map);
