@@ -130,10 +130,11 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
     const toppings = page.locator(".PdpCustomizer__toppingCategory");
 
     await toppings.getByLabel("Meats").click({ force: true });
-    await toppings.getByText("Pepperoni").click();
+    await toppings.getByText("Sausage-Mild").click();
 
-    await toppings.getByLabel("Veggies").click({ force: true });
-    await toppings.getByText("Mushrooms").click({ force: true });
+    // Mushrooms are gone currently
+    // await toppings.getByLabel("Veggies").click({ force: true });
+    // await toppings.getByText("Mushrooms").click({ force: true });
 
     await page
       .locator('[data-automation-id="addToCartButton"]')

@@ -1,5 +1,6 @@
 import { APIGatewayProxyResult, EventBridgeEvent, Handler } from "aws-lambda";
-import { chromium } from "playwright";
+import { addMinutes, isBefore, startOfHour } from "date-fns";
+import { formatInTimeZone } from 'date-fns-tz';
 import { main } from "./caseys-playwright";
 
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
@@ -66,17 +67,17 @@ export const handler: Handler = async (
       body: JSON.stringify({ message: "Did not trigger event" }),
     };
   }
-  const { CASEYS_ZIP, CASEYS_TIME } = process.env;
+  const { zip, time } = resolvePizzaLocationAndDetails(detail);
   await main(
-    { time: CASEYS_TIME!, zip: CASEYS_ZIP! },
+    { time, zip },
     {
       args,
       headless: true
     },
   );
-  
-  await sendDiscordAnnouncement(event.detail.DeviceId, CASEYS_TIME!, CASEYS_ZIP!, event.detail.GeofenceId, event.detail.EventType);
-  
+
+  await sendDiscordAnnouncement(event.detail.DeviceId, time, zip, event.detail.GeofenceId, event.detail.EventType);
+
   return {
     statusCode: 200,
     body: JSON.stringify(event, null, 2),
@@ -84,12 +85,12 @@ export const handler: Handler = async (
 };
 
 function shouldTriggerEvent(detail: GeofenceType) {
-  const eventActionToTrigger = "EXIT";
-  const geofenceToTrigger = "home";
+  const supportedAction = "EXIT";
+  const supportedFences = ['arlington', 'home'];
 
   return (
-    detail.EventType === eventActionToTrigger &&
-    detail.GeofenceId === geofenceToTrigger
+    detail.EventType === supportedAction &&
+    supportedFences.includes(detail.GeofenceId.toLowerCase())
   );
 }
 async function sendDiscordAnnouncement(deviceId: string, time: string, zip: string, geofence: string, action: string) {
@@ -103,5 +104,48 @@ async function sendDiscordAnnouncement(deviceId: string, time: string, zip: stri
       content: `Pizza ordered for device ${deviceId} from zip ${zip} scheduled for ${time}, based on ${action} from geofence ${geofence}`
     })
   });
+}
+
+function resolvePizzaLocationAndDetails(detail: GeofenceType): { zip: string; time: string; } {
+  type Mapping = {
+    zip: string;
+    distanceToTravel: number;
+  }
+  const mappings: { [k: string]: Mapping } = {
+    arlington: {
+      zip: '68064',
+      distanceToTravel: 14.2
+    },
+    home: {
+      zip: '68104',
+      distanceToTravel: 1
+    }
+  }
+  const fenceId = detail.GeofenceId.toLowerCase();
+  const locationSettings = mappings[fenceId];
+
+  if (!locationSettings) {
+    console.warn("Could not resolve pizza locations, just using defaults from env");
+    const { CASEYS_ZIP, CASEYS_TIME } = process.env;
+    return { zip: CASEYS_ZIP!, time: CASEYS_TIME! };
+  }
+
+  const travelSpeed = 11;
+  const minutesToTravelDistance = Math.round((locationSettings.distanceToTravel / travelSpeed) * 60);
+  const eventTime = new Date(detail.SampleTime);
+  const exactPickupTime = addMinutes(eventTime, minutesToTravelDistance);
+  console.log('exact pickup time', exactPickupTime);
+  const topOfHour = startOfHour(exactPickupTime);
+  let pickupTime = topOfHour;
+  let challenge = addMinutes(topOfHour, 15);
+  while (isBefore(challenge, exactPickupTime)) {
+    pickupTime = challenge;
+    challenge = addMinutes(pickupTime, 15);
+  }
+  console.log('found actual time ', pickupTime);
+  const time = formatInTimeZone(pickupTime, 'America/Chicago', 'hh:mm bb')
+  console.log('time found: ', time);
+
+  return { zip: locationSettings.zip, time };
 }
 
