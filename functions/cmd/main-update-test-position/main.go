@@ -16,7 +16,7 @@ func main() {
 	// ww := []float64{40.869963, -96.139978}
 	home := []float64{41.276497, -95.988033}
 
-	isAtHome := false
+	isAtHome := true
 	var lon, lat float64
 	if isAtHome {
 		lon = home[1]

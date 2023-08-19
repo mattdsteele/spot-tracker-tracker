@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "prettier": "prettier -w src",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "prettier": "^3.0.2",
     "rollup-plugin-visualizer": "^5.7.1",
     "typescript": "^5",
     "vite": "^4.0.4"
