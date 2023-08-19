@@ -2,9 +2,11 @@ package spot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/SherClockHolmes/webpush-go"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -14,6 +16,7 @@ import (
 
 var LatestPingTable = "spot-tracker-latest-ping"
 var FenceEventsTable = "spot-tracker-fence-events"
+var SubscriptionTable = "spot-tracker-subscriptions"
 
 func SaveLatestTimestap(config aws.Config, timestamp time.Time) error {
 	client := dynamodb.NewFromConfig(config)
@@ -117,4 +120,50 @@ func toFenceTransitionDetails(transitions []map[string]types.AttributeValue) ([]
 		return nil, err
 	}
 	return dtos, nil
+}
+
+func saveSubscriptionInDb(config aws.Config, subscription string) error {
+	client := dynamodb.NewFromConfig(config)
+	input := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
+			SubscriptionTable: {
+				{
+					PutRequest: &types.PutRequest{
+						Item: map[string]types.AttributeValue{
+							"subscription": &types.AttributeValueMemberS{Value: subscription},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err := client.BatchWriteItem(context.Background(), input)
+	return err
+}
+
+func GetSubscriptions(config aws.Config) ([]webpush.Subscription, error) {
+	var subs []webpush.Subscription
+	client := dynamodb.NewFromConfig(config)
+	results, err := client.Scan(context.Background(), &dynamodb.ScanInput{
+		TableName: &SubscriptionTable,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range results.Items {
+		s := r["subscription"]
+		var sub string
+		attributevalue.Unmarshal(s, &sub)
+
+		var subscription webpush.Subscription
+		err = json.Unmarshal([]byte(sub), &subscription)
+		if err != nil {
+			fmt.Println("error unmarshalling")
+			fmt.Println(err)
+		}
+		subs = append(subs, subscription)
+
+	}
+	return subs, nil
 }
