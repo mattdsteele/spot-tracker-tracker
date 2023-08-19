@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-lambda": "^1.0.7",
+    "node-fetch": "^2.6.12",
     "playwright": "^1.36.2",
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"

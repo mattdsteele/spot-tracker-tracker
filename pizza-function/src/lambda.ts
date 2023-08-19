@@ -74,6 +74,9 @@ export const handler: Handler = async (
       headless: true
     },
   );
+  
+  await sendDiscordAnnouncement(event.detail.DeviceId, CASEYS_TIME!, CASEYS_ZIP!, event.detail.GeofenceId, event.detail.EventType);
+  
   return {
     statusCode: 200,
     body: JSON.stringify(event, null, 2),
@@ -89,3 +92,16 @@ function shouldTriggerEvent(detail: GeofenceType) {
     detail.GeofenceId === geofenceToTrigger
   );
 }
+async function sendDiscordAnnouncement(deviceId: string, time: string, zip: string, geofence: string, action: string) {
+  const url = process.env.CASEYS_DISCORD_WEBHOOK_URL;
+  await fetch(url!, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+    body: JSON.stringify({
+      content: `Pizza ordered for device ${deviceId} from zip ${zip} scheduled for ${time}, based on ${action} from geofence ${geofence}`
+    })
+  });
+}
+

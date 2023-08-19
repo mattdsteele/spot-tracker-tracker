@@ -193,6 +193,7 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
       const foundSearchField = (await searchField.count() === 1);
       if (!foundSearchField) {
         console.log('failed to find search field, on retry ', retries)
+        page.waitForTimeout(1000);
         return findSearchFieldWithRetries(retries-1);
       }
       return searchField;
