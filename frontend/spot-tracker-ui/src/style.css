@@ -17,3 +17,21 @@ body {
 .maplibregl-popup-content h3 {
   margin: 0;
 }
+
+.notifications {
+  cursor: pointer;
+  position: fixed;
+  font-size: 2em;
+  top: 1em;
+  right: 1em;
+
+  line-height: 1.2em;
+  background: white;
+  border-radius: 50%;
+  box-sizing: border-box;
+  padding: 11px;
+}
+
+.hidden {
+  display: none;
+}
