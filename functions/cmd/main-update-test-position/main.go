@@ -14,14 +14,17 @@ func main() {
 	cfg, _ := config.LoadDefaultConfig(context.Background())
 	peanut := []float64{41.274247, -95.990457}
 	// ww := []float64{40.869963, -96.139978}
+	arlington := []float64{41.452374, -96.354280}
 	home := []float64{41.276497, -95.988033}
 
-	isAtHome := true
+	isAtHome := false
 	var lon, lat float64
 	if isAtHome {
 		lon = home[1]
 		lat = home[0]
 	} else {
+		lon = arlington[1]
+		lat = arlington[0]
 		lon = peanut[1]
 		lat = peanut[0]
 	}

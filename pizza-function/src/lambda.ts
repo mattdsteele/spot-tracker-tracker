@@ -86,7 +86,7 @@ export const handler: Handler = async (
 
 function shouldTriggerEvent(detail: GeofenceType) {
   const supportedAction = "EXIT";
-  const supportedFences = ['arlington', 'home'];
+  const supportedFences = ['arlington'];
 
   return (
     detail.EventType === supportedAction &&
