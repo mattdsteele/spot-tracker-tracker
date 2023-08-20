@@ -1,15 +1,14 @@
-type Stop = [string, string, number];
+export type Stop = [string, string, number];
 export const stops: Stop[] = [
-  ['syracuse', 'Syracuse', 51],
-  ['van', 'Van by the River', 81.1],
-  ['pawnee-city', 'Pawnee City', 109.4],
-  ['marysville', 'Marysville', 153],
-  ['beatrice', 'Beatrice', 198],
-  ['wilber', 'Wilber', 223.9],
-  ['crete', 'Crete', 237.2],
-  ['malcom', 'Malcom', 266],
-  ['gw-checkpoint', 'GW Checkpoint', 277.7],
-  ['raymond', 'Raymond', 294.4],
-  ['start', 'Start/Finish', 302.2],
-  ['omaha', 'Omaha', 99],
+  ["Weeping-Water", "Weeping-Water", 46.7],
+  ["Pacific-Junction", "Pacific-Junction", 79.9],
+  ["Glenwood", "Glenwood", 84.2],
+  ["Treynor-Van", "Treynor-Van", 109],
+  ["Missouri-Valley", "Missouri-Valley", 151.6],
+  ["Blair", "Blair", 166.5],
+  ["Arlington", "Arlington", 188.2],
+  ["Valley", "Valley", 202.4],
+  ["Valpariso", "Valpariso", 245.7],
+  ["GW-Checkpoint", "GW-Checkpoint", 261],
+  ["Finish", "Finish", 303.4],
 ];

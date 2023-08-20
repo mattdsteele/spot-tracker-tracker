@@ -252,6 +252,9 @@ async function addFencesToMap(map: Map) {
     const props = features[0].properties;
     const { id } = props;
     const stop = stops.find((x) => x[0] === id);
+    console.log(props);
+    console.log('stops', stops);
+    console.log('stop', stop);
     const fenceTransitions = state.transitions
       .filter((x) => x.geofence === id)
       .sort((a, b) => (a.eventTime < b.eventTime ? 1 : -1));
