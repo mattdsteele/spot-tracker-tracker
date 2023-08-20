@@ -1,7 +1,6 @@
 import { APIGatewayProxyResult, EventBridgeEvent, Handler } from "aws-lambda";
-import { addMinutes, isBefore, startOfHour } from "date-fns";
-import { formatInTimeZone } from 'date-fns-tz';
 import { main } from "./caseys-playwright";
+import { getCheckoutTime } from "./dates";
 
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
 let args = [
@@ -106,11 +105,11 @@ async function sendDiscordAnnouncement(deviceId: string, time: string, zip: stri
   });
 }
 
+type Mapping = {
+  zip: string;
+  distanceToTravel: number;
+}
 function resolvePizzaLocationAndDetails(detail: GeofenceType): { zip: string; time: string; } {
-  type Mapping = {
-    zip: string;
-    distanceToTravel: number;
-  }
   const mappings: { [k: string]: Mapping } = {
     arlington: {
       zip: '68064',
@@ -130,22 +129,9 @@ function resolvePizzaLocationAndDetails(detail: GeofenceType): { zip: string; ti
     return { zip: CASEYS_ZIP!, time: CASEYS_TIME! };
   }
 
-  const travelSpeed = 11;
-  const minutesToTravelDistance = Math.round((locationSettings.distanceToTravel / travelSpeed) * 60);
-  const eventTime = new Date(detail.SampleTime);
-  const exactPickupTime = addMinutes(eventTime, minutesToTravelDistance);
-  console.log('exact pickup time', exactPickupTime);
-  const topOfHour = startOfHour(exactPickupTime);
-  let pickupTime = topOfHour;
-  let challenge = addMinutes(topOfHour, 15);
-  while (isBefore(challenge, exactPickupTime)) {
-    pickupTime = challenge;
-    challenge = addMinutes(pickupTime, 15);
-  }
-  console.log('found actual time ', pickupTime);
-  const time = formatInTimeZone(pickupTime, 'America/Chicago', 'hh:mm bb')
-  console.log('time found: ', time);
+  const time = getCheckoutTime(locationSettings.distanceToTravel, detail.SampleTime);
 
   return { zip: locationSettings.zip, time };
 }
+
 
