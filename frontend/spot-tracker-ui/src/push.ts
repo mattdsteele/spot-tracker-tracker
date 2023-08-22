@@ -5,6 +5,7 @@ import type { SlDialog } from '@shoelace-style/shoelace';
 
 async function handlePush() {
   if (!supportsWebPush()) {
+    alert('does not support web push, exiting')
     return;
   }
 
@@ -12,7 +13,6 @@ async function handlePush() {
 }
 
 handlePush();
-console.log('sending push notifications');
 
 function supportsWebPush() {
   return 'serviceWorker' in navigator;
@@ -53,14 +53,20 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 async function registerSubscription() {
+  alert('registering subscription');
   navigator.serviceWorker.register('service-worker.js');
+  alert('registered');
   const registration = await navigator.serviceWorker.ready;
+  alert('registered');
 
 
   // If we think it's Safari but doesn't have push manager, show specific instructions
   const ua = navigator.userAgent;
+  alert(ua);
   if (ua.includes('iPhone') || ua.includes('iPad')) {
+    alert('is ios')
     if (!('pushManager' in registration)) {
+      alert('does not have push in registration')
       const bell = document.querySelector('.notifications');
       bell.classList.toggle('hidden');
       bell.addEventListener('click', () => {
@@ -71,6 +77,7 @@ async function registerSubscription() {
     }
   }
 
+  alert('getting push subscription');
   const subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
     const bell = document.querySelector('.notifications');
