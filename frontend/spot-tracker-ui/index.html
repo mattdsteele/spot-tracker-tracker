@@ -22,6 +22,15 @@
   <div id='map'></div>
   <div class="notifications hidden"><img src="notifications-circle.svg"></div>
   <div class="refresh"><img src="refresh-circle.svg"></div>
+  <sl-dialog label="Notifications" class="notify-dialog">
+    Subscribe to receive notifications when Matt reaches each town!
+    <sl-button slot="footer" variant="primary">Subscribe</sl-button>
+  </sl-dialog>
+
+  <sl-dialog label="Notifications" class="ios-notify-steps">
+    <p>Hi iOS user! To sign up for notifications, there's a few steps needed.</p>
+    <p>See this video for details:</p>
+  </sl-dialog>
   <script type="module" src="/src/main.ts"></script>
   <script type="module" src="/src/push.ts"></script>
 </body>

@@ -1,3 +1,8 @@
+import '@shoelace-style/shoelace/dist/components/dialog/dialog';
+import '@shoelace-style/shoelace/dist/components/button/button';
+import '@shoelace-style/shoelace/dist/themes/light.css';
+import type { SlDialog } from '@shoelace-style/shoelace';
+
 async function handlePush() {
   if (!supportsWebPush()) {
     return;
@@ -50,14 +55,38 @@ function urlBase64ToUint8Array(base64String: string) {
 async function registerSubscription() {
   navigator.serviceWorker.register('service-worker.js');
   const registration = await navigator.serviceWorker.ready;
+
+
+  // If we think it's Safari but doesn't have push manager, show specific instructions
+  const ua = navigator.userAgent;
+  if (ua.includes('iPhone') || ua.includes('iPad')) {
+    if (!('pushManager' in registration)) {
+      const bell = document.querySelector('.notifications');
+      bell.classList.toggle('hidden');
+      bell.addEventListener('click', () => {
+        const dialog: SlDialog = document.querySelector('.ios-notify-steps');
+        dialog.show();
+      });
+      return;
+    }
+  }
+
   const subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
     const bell = document.querySelector('.notifications');
     bell.classList.toggle('hidden');
     bell.addEventListener('click', () => {
-      subscribe();
+      const dialog: SlDialog = document.querySelector('.notify-dialog');
+      dialog.show();
+      dialog.querySelector('sl-button').addEventListener('click', async () => {
+        await subscribe();
+        await dialog.hide();
+        bell.classList.toggle('hidden');
+      })
     });
   } else {
+    console.log('already have a subscription');
+
     console.log(
       JSON.stringify({
         subscription: subscription,
