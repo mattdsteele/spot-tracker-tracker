@@ -37,7 +37,8 @@ body {
   display: none;
 }
 video {
-  max-width: 300px;
+  margin: auto;
+  max-width: 200px;
 }
 
 .refresh {
