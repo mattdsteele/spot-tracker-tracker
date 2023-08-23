@@ -36,6 +36,9 @@ body {
 .hidden {
   display: none;
 }
+video {
+  max-width: 300px;
+}
 
 .refresh {
   position: fixed;
