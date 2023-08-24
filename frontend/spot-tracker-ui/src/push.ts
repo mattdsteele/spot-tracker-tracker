@@ -40,7 +40,7 @@ async function saveSubscription(subscription: PushSubscription) {
         },
         body: JSON.stringify(subscription)
     })
-    console.log(response)
+    console.log(response.status);
 }
 
 function urlBase64ToUint8Array(base64String: string) {

@@ -13,15 +13,16 @@ import (
 )
 
 func main() {
-	lambda.Start(func(ctx context.Context, request events.APIGatewayProxyRequest) ([]webpush.Subscription, error) {
+	lambda.Start(func(ctx context.Context, request events.APIGatewayProxyRequest) error {
 		config, _ := config.LoadDefaultConfig(ctx)
 		body := request.Body
 		var subscription webpush.Subscription
 		if err := json.Unmarshal([]byte(body), &subscription); err != nil {
-			return nil, errors.New("failed to unmarshall")
+			return errors.New("failed to unmarshall")
 		}
 		spot.SaveSubscription(config, subscription)
-		subs, _ := spot.GetSubscriptions(config)
-		return subs, nil
+
+		spot.SendNotification(config, subscription, []byte("Hey, you're getting notifications!"))
+		return nil
 	})
 }

@@ -2,6 +2,8 @@ package spot
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/SherClockHolmes/webpush-go"
@@ -15,24 +17,29 @@ func SaveSubscription(config aws.Config, subscription webpush.Subscription) erro
 
 func SendPushNotifications(config aws.Config, fenceTransition *GeofenceTransitionEvent) int {
 	notifications := 0
-	publicKey := os.Getenv("SPOT_VAPID_PUBLIC_KEY")
-	privateKey := os.Getenv("SPOT_VAPID_PRIVATE_KEY")
 	subs, _ := GetSubscriptions(config)
 	content := notificationPayload(fenceTransition)
 	for _, sub := range subs {
-		resp, err := webpush.SendNotification([]byte(content), &sub, &webpush.Options{
-			Subscriber:      "matt@steele.blue",
-			VAPIDPublicKey:  publicKey,
-			VAPIDPrivateKey: privateKey,
-			TTL:             30,
-		})
+		resp, err := SendNotification(config, sub, []byte(content))
 		if err != nil {
-			panic(err)
+			fmt.Printf("failed to send notification to %s due to %s\n", sub.Endpoint, err.Error())
 		}
 		notifications++
 		defer resp.Body.Close()
 	}
 	return notifications
+}
+
+func SendNotification(config aws.Config, sub webpush.Subscription, message []byte) (*http.Response, error) {
+	publicKey := os.Getenv("SPOT_VAPID_PUBLIC_KEY")
+	privateKey := os.Getenv("SPOT_VAPID_PRIVATE_KEY")
+	resp, err := webpush.SendNotification(message, &sub, &webpush.Options{
+		Subscriber:      "matt@steele.blue",
+		VAPIDPublicKey:  publicKey,
+		VAPIDPrivateKey: privateKey,
+		TTL:             30,
+	})
+	return resp, err
 }
 
 func notificationPayload(fenceTransition *GeofenceTransitionEvent) string {
