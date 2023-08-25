@@ -9,5 +9,5 @@ export async function sendPushEvent(pushSubscription: webpush.PushSubscription, 
             publicKey
         }
     }
-    webpush.sendNotification(pushSubscription, text, options)
+    return await webpush.sendNotification(pushSubscription, text, options)
 }

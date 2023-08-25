@@ -20,7 +20,7 @@ export type Result = {
 
 export async function main(order: OrderOptions, launchOptions: LaunchOptions): Promise<Result> {
   console.log("about to launch");
-  console.log(`simulation? ${isEnabled(order)}`)
+  console.log(`actually enabled? ${isEnabled(order)}`)
   const { page, browser } = await launch(launchOptions);
   console.log("launched");
 

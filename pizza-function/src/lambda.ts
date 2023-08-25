@@ -80,11 +80,16 @@ export const handler: Handler = async (
         headless: true
       },
     );
+    console.log(`Completed with result ${JSON.stringify(results)}`)
     if (results.simulation) {
-      sendPushEvent(sub, "Pizza simulation")
+      const result = await sendPushEvent(sub, "Pizza simulation")
+      console.log('sent dummy notification')
+      console.log(result.statusCode);
+      console.log(result.body);
     } else {
-      sendPushEvent(sub, `🍕🍕🍕🍕🍕 Pizza Ordered for ${time} to zip ${zip} 🍕🍕🍕🍕🍕`)
+      await sendPushEvent(sub, `🍕🍕🍕🍕🍕 Pizza Ordered for ${time} to zip ${zip} 🍕🍕🍕🍕🍕`)
       await sendDiscordAnnouncement(event.detail.DeviceId, time, zip, event.detail.GeofenceId, event.detail.EventType);
+      console.log('sent real notifications')
     }
 
     return {
@@ -95,12 +100,9 @@ export const handler: Handler = async (
     console.error('Failed the request process')
     console.error(e);
     if (!isSimulation) {
-      sendPushEvent(sub, "Failed to order pizza")
+      await sendPushEvent(sub, "Failed to order pizza")
     }
-    return {
-      statusCode: 500,
-      body: JSON.stringify(e)
-    }
+    throw e;
   }
 
 };
@@ -143,7 +145,7 @@ function resolvePizzaLocationAndDetails(detail: GeofenceType): { zip: string; ti
     },
     home: {
       zip: '68104',
-      distanceToTravel: 4
+      distanceToTravel: 20
     }
   }
   const fenceId = detail.GeofenceId.toLowerCase();
