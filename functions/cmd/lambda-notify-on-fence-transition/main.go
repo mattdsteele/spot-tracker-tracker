@@ -23,6 +23,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		if d.DeviceId == "fake-tracker" {
+			return
+		}
 		notifications := spot.SendPushNotifications(cfg, d)
 		fmt.Printf("sent %d push notifications\n", notifications)
 	})
