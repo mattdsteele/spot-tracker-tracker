@@ -1,6 +1,8 @@
 import { APIGatewayProxyResult, EventBridgeEvent, Handler } from "aws-lambda";
 import { main } from "./caseys-playwright";
 import { getCheckoutTime } from "./dates";
+import { sendPushEvent } from "./push";
+import webpush from 'web-push';
 
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
 let args = [
@@ -67,23 +69,44 @@ export const handler: Handler = async (
     };
   }
   const { zip, time } = resolvePizzaLocationAndDetails(detail);
-  await main(
-    { time, zip },
-    {
-      args,
-      headless: true
-    },
-  );
+  try {
+    const isSimulation = detail.DeviceId === 'fake-tracker';
 
-  await sendDiscordAnnouncement(event.detail.DeviceId, time, zip, event.detail.GeofenceId, event.detail.EventType);
+    const results = await main(
+      { time, zip, isSimulation },
+      {
+        args,
+        headless: true
+      },
+    );
+    const { SPOT_PUSH_MATT_SUB } = process.env;
+    const sub: webpush.PushSubscription = JSON.parse(SPOT_PUSH_MATT_SUB!);
+    if (results.simulation) {
+      sendPushEvent(sub, "Pizza simulation")
+    } else {
+      sendPushEvent(sub, `🍕🍕🍕🍕🍕 Pizza Ordered for ${time} to zip ${zip} 🍕🍕🍕🍕🍕`)
+      await sendDiscordAnnouncement(event.detail.DeviceId, time, zip, event.detail.GeofenceId, event.detail.EventType);
+    }
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify(event, null, 2),
-  };
+    return {
+      statusCode: 200,
+      body: JSON.stringify(event, null, 2),
+    };
+  } catch (e) {
+    console.error('Failed the request process')
+    return {
+      statusCode: 500,
+      body: JSON.stringify(e)
+    }
+  }
+
 };
 
 function shouldTriggerEvent(detail: GeofenceType) {
+  if (detail.DeviceId === 'fake-tracker' && detail.EventType === 'EXIT' && detail.GeofenceId.toLowerCase() === 'home') {
+    return true;
+  }
+
   const supportedAction = "EXIT";
   const supportedFences = ['arlington'];
 
@@ -117,7 +140,7 @@ function resolvePizzaLocationAndDetails(detail: GeofenceType): { zip: string; ti
     },
     home: {
       zip: '68104',
-      distanceToTravel: 1
+      distanceToTravel: 4
     }
   }
   const fenceId = detail.GeofenceId.toLowerCase();

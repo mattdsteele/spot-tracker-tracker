@@ -11,10 +11,16 @@ const stealth = require("puppeteer-extra-plugin-stealth")();
 export interface OrderOptions {
   zip: string;
   time: string;
+  isSimulation: boolean;
 }
-export async function main(order: OrderOptions, options: LaunchOptions) {
+
+export type Result = {
+  simulation: boolean;
+}
+
+export async function main(order: OrderOptions, launchOptions: LaunchOptions): Promise<Result> {
   console.log("about to launch");
-  const { page, browser } = await launch(options);
+  const { page, browser } = await launch(launchOptions);
   console.log("launched");
 
   await page.goto("https://caseys.com");
@@ -32,7 +38,7 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
   await checkout();
 
   // Actually submit the order
-  if (ENABLED === "true") {
+  if (isEnabled(order)) {
     // Ugly but it works
     await page
       .locator(
@@ -154,16 +160,6 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
 
     const { CASEYS_CVV } = process.env;
 
-    // await page.locator('input[name="username"]').first().type(CASEYS_EMAIL!);
-    // await page.locator('input[name="password"]').first().type(CASEYS_PASSWORD!);
-
-    // await page.locator("#btn_customized_sign_in").click();
-
-    // await page
-    //   .locator('[data-automation-id="checkoutButton"]:visible')
-    //   .first()
-    //   .click();
-
     await page.getByLabel("CVV").type(CASEYS_CVV!);
   }
 
@@ -195,7 +191,7 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
       if (!foundSearchField) {
         console.log('failed to find search field, on retry ', retries)
         page.waitForTimeout(1000);
-        return findSearchFieldWithRetries(retries-1);
+        return findSearchFieldWithRetries(retries - 1);
       }
       return searchField;
     }
@@ -223,8 +219,15 @@ export async function main(order: OrderOptions, options: LaunchOptions) {
       }
     }
   }
+  return {
+    simulation: !isEnabled(order)
+  }
 
 }
+function isEnabled(options: OrderOptions) {
+  return !(options.isSimulation) && ENABLED === "true";
+}
+
 async function launch(options: LaunchOptions) {
   console.log("in main fn");
   chromium.use(stealth);
