@@ -69,9 +69,10 @@ export const handler: Handler = async (
     };
   }
   const { zip, time } = resolvePizzaLocationAndDetails(detail);
+  const isSimulation = detail.DeviceId === 'fake-tracker';
+  const { SPOT_PUSH_MATT_SUB } = process.env;
+  const sub: webpush.PushSubscription = JSON.parse(SPOT_PUSH_MATT_SUB!);
   try {
-    const isSimulation = detail.DeviceId === 'fake-tracker';
-
     const results = await main(
       { time, zip, isSimulation },
       {
@@ -79,8 +80,6 @@ export const handler: Handler = async (
         headless: true
       },
     );
-    const { SPOT_PUSH_MATT_SUB } = process.env;
-    const sub: webpush.PushSubscription = JSON.parse(SPOT_PUSH_MATT_SUB!);
     if (results.simulation) {
       sendPushEvent(sub, "Pizza simulation")
     } else {
@@ -94,6 +93,10 @@ export const handler: Handler = async (
     };
   } catch (e) {
     console.error('Failed the request process')
+    console.error(e);
+    if (!isSimulation) {
+      sendPushEvent(sub, "Failed to order pizza")
+    }
     return {
       statusCode: 500,
       body: JSON.stringify(e)
