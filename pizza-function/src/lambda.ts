@@ -3,6 +3,8 @@ import { main } from "./caseys-playwright";
 import { getCheckoutTime } from "./dates";
 import { sendPushEvent } from "./push";
 import webpush from "web-push";
+import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
+import {basename} from 'path';
 
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
 let args = [
@@ -74,13 +76,16 @@ export const handler: Handler = async (
   const sub: webpush.PushSubscription = JSON.parse(SPOT_PUSH_MATT_SUB!);
   try {
     const results = await main(
-      { time, zip, isSimulation, recordVideo: false },
+      { time, zip, isSimulation, recordVideo: true },
       {
         args,
         headless: true,
       },
     );
     console.log(`Completed with result ${JSON.stringify(results)}`);
+    if (results.video) {
+      await uploadVideo(results.video);
+    }
     if (results.simulation) {
       const result = await sendPushEvent(sub, "Pizza simulation");
       console.log("sent dummy notification");
@@ -187,3 +192,25 @@ function resolvePizzaLocationAndDetails(detail: GeofenceType): {
 
   return { zip: locationSettings.zip, time };
 }
+
+async function uploadVideo(video: string) {
+  const key = basename(video);
+  console.log(`ready to save file ${video} as name ${key}`)
+
+  try {
+    const client = new S3Client();
+    const upload = new PutObjectCommand({
+      Bucket: 'spot-caseys-pizza',
+      Body: video,
+      Key: key
+    });
+    const result = await client.send(upload);
+    console.log('Sent video');
+    console.log(result)
+  } catch (e) {
+    console.error('could not send video');
+    console.error(e);
+
+  }
+}
+
