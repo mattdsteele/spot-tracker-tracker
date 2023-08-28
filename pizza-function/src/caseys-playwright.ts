@@ -1,5 +1,6 @@
-import { LaunchOptions } from "playwright";
+import { BrowserContext, LaunchOptions, Page } from "playwright";
 import { chromium } from "playwright-extra";
+import { tmpdir } from "os";
 // https://www.npmjs.com/package/@sparticuz/chromium
 
 const ENABLED = process.env.CASEYS_ENABLE || "false";
@@ -12,22 +13,27 @@ export interface OrderOptions {
   zip: string;
   time: string;
   isSimulation: boolean;
+  recordVideo: boolean;
 }
 
 export type Result = {
+  video: string;
   simulation: boolean;
-}
+};
 
-export async function main(order: OrderOptions, launchOptions: LaunchOptions): Promise<Result> {
+export async function main(
+  order: OrderOptions,
+  launchOptions: LaunchOptions,
+): Promise<Result> {
   console.log("about to launch");
-  console.log(`actually enabled? ${isEnabled(order)}`)
-  const { page, browser } = await launch(launchOptions);
+  console.log(`actually enabled? ${isEnabled(order)}`);
+  const { page, browser, context } = await launch(launchOptions, order);
   console.log("launched");
 
   await page.goto("https://caseys.com");
 
   await login();
-  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState("domcontentloaded");
   await startOrder(order.zip, order.time);
   await clearExistingCart();
   await openMenu();
@@ -49,10 +55,11 @@ export async function main(order: OrderOptions, launchOptions: LaunchOptions): P
   }
 
   console.log("All done, check the screenshot. ✨");
+  await context.close();
   await browser.close();
 
   async function openMenu() {
-    await page.locator('a', { hasText: 'Menu' }).first().click();
+    await page.locator("a", { hasText: "Menu" }).first().click();
   }
 
   async function orderTacoPizza() {
@@ -165,7 +172,7 @@ export async function main(order: OrderOptions, launchOptions: LaunchOptions): P
   }
 
   async function startOrder(zip: string, time: string) {
-    await page.waitForLoadState('load');
+    await page.waitForLoadState("load");
     const searchField = await findSearchFieldWithRetries(3);
     await searchField.type(zip);
     await page.waitForSelector(".pac-container");
@@ -182,15 +189,15 @@ export async function main(order: OrderOptions, launchOptions: LaunchOptions): P
 
     async function findSearchFieldWithRetries(retries: number) {
       if (retries === 0) {
-        throw new Error('failed to find search field after 3 retries')
+        throw new Error("failed to find search field after 3 retries");
       }
       await page.locator('[data-automation-id="carryout"]').click();
-      const searchField = page.locator(
-        '[data-automation-id="addressSearchField"]'
-      ).locator('visible=true');
-      const foundSearchField = (await searchField.count() === 1);
+      const searchField = page
+        .locator('[data-automation-id="addressSearchField"]')
+        .locator("visible=true");
+      const foundSearchField = (await searchField.count()) === 1;
       if (!foundSearchField) {
-        console.log('failed to find search field, on retry ', retries)
+        console.log("failed to find search field, on retry ", retries);
         page.waitForTimeout(1000);
         return findSearchFieldWithRetries(retries - 1);
       }
@@ -199,7 +206,11 @@ export async function main(order: OrderOptions, launchOptions: LaunchOptions): P
   }
 
   async function login() {
-    await page.locator('[data-automation-id="navLink2"]').filter({ hasText: "Sign in" }).first().click();
+    await page
+      .locator('[data-automation-id="navLink2"]')
+      .filter({ hasText: "Sign in" })
+      .first()
+      .click();
     const { CASEYS_EMAIL, CASEYS_PASSWORD } = process.env;
 
     await page.locator('input[name="username"]').first().type(CASEYS_EMAIL!);
@@ -212,35 +223,60 @@ export async function main(order: OrderOptions, launchOptions: LaunchOptions): P
     await page.locator('[data-automation-id="desktopCartLink"]').click();
     let emptyCart = false;
     while (!emptyCart) {
-      const number = await page.locator('.pb-3', { hasText: 'There are no items in your order.' }).count()
+      const number = await page
+        .locator(".pb-3", { hasText: "There are no items in your order." })
+        .count();
       if (number === 1) {
         emptyCart = true;
       } else {
-        await page.locator('[data-automation-id="removeProductButton"]').first().click();
+        await page
+          .locator('[data-automation-id="removeProductButton"]')
+          .first()
+          .click();
       }
     }
   }
+  const video = await page.video()?.path()!;
   return {
-    simulation: !isEnabled(order)
-  }
-
+    video,
+    simulation: !isEnabled(order),
+  };
 }
 function isEnabled(options: OrderOptions) {
-  return !(options.isSimulation) && ENABLED === "true";
+  return !options.isSimulation && ENABLED === "true";
 }
 
-async function launch(options: LaunchOptions) {
+async function launch(
+  options: LaunchOptions,
+  { recordVideo }: Partial<OrderOptions>,
+) {
   console.log("in main fn");
   chromium.use(stealth);
   console.log("after use stealth");
   console.log(`headless? ${options?.headless}`);
   const browser = await chromium.launch(options);
+  const width = 1920;
+  const height = 1080;
+  let page: Page;
+  let context: BrowserContext;
+  if (recordVideo) {
+    context = await browser.newContext({
+      recordVideo: {
+        dir: tmpdir(),
+        size: {
+          width,
+          height,
+        },
+      },
+    });
+    page = await context.newPage();
+  } else {
+    page = await browser.newPage();
+    context = page.context();
+  }
   console.log("after launch");
-  const page = await browser.newPage();
-  page.setViewportSize({ width: 1920, height: 1080 });
+  page.setViewportSize({ width, height });
   console.log("after new page");
 
-  return { page, browser };
+  return { page, browser, context };
 }
-
-

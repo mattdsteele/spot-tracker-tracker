@@ -2,7 +2,7 @@ import { APIGatewayProxyResult, EventBridgeEvent, Handler } from "aws-lambda";
 import { main } from "./caseys-playwright";
 import { getCheckoutTime } from "./dates";
 import { sendPushEvent } from "./push";
-import webpush from 'web-push';
+import webpush from "web-push";
 
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
 let args = [
@@ -62,34 +62,43 @@ export const handler: Handler = async (
   const { detail } = event;
 
   if (!shouldTriggerEvent(detail)) {
-    console.log('Did not match pizza criteria, returning')
+    console.log("Did not match pizza criteria, returning");
     return {
       statusCode: 200,
       body: JSON.stringify({ message: "Did not trigger event" }),
     };
   }
   const { zip, time } = resolvePizzaLocationAndDetails(detail);
-  const isSimulation = detail.DeviceId === 'fake-tracker';
+  const isSimulation = detail.DeviceId === "fake-tracker";
   const { SPOT_PUSH_MATT_SUB } = process.env;
   const sub: webpush.PushSubscription = JSON.parse(SPOT_PUSH_MATT_SUB!);
   try {
     const results = await main(
-      { time, zip, isSimulation },
+      { time, zip, isSimulation, recordVideo: false },
       {
         args,
-        headless: true
+        headless: true,
       },
     );
-    console.log(`Completed with result ${JSON.stringify(results)}`)
+    console.log(`Completed with result ${JSON.stringify(results)}`);
     if (results.simulation) {
-      const result = await sendPushEvent(sub, "Pizza simulation")
-      console.log('sent dummy notification')
+      const result = await sendPushEvent(sub, "Pizza simulation");
+      console.log("sent dummy notification");
       console.log(result.statusCode);
       console.log(result.body);
     } else {
-      await sendPushEvent(sub, `🍕🍕🍕🍕🍕 Pizza Ordered for ${time} to zip ${zip} 🍕🍕🍕🍕🍕`)
-      await sendDiscordAnnouncement(event.detail.DeviceId, time, zip, event.detail.GeofenceId, event.detail.EventType);
-      console.log('sent real notifications')
+      await sendPushEvent(
+        sub,
+        `🍕🍕🍕🍕🍕 Pizza Ordered for ${time} to zip ${zip} 🍕🍕🍕🍕🍕`,
+      );
+      await sendDiscordAnnouncement(
+        event.detail.DeviceId,
+        time,
+        zip,
+        event.detail.GeofenceId,
+        event.detail.EventType,
+      );
+      console.log("sent real notifications");
     }
 
     return {
@@ -97,69 +106,84 @@ export const handler: Handler = async (
       body: JSON.stringify(event, null, 2),
     };
   } catch (e) {
-    console.error('Failed the request process')
+    console.error("Failed the request process");
     console.error(e);
     if (!isSimulation) {
-      await sendPushEvent(sub, "Failed to order pizza")
+      await sendPushEvent(sub, "Failed to order pizza");
     }
     throw e;
   }
-
 };
 
 function shouldTriggerEvent(detail: GeofenceType) {
-  if (detail.DeviceId === 'fake-tracker' && detail.EventType === 'EXIT' && detail.GeofenceId.toLowerCase() === 'home') {
+  if (
+    detail.DeviceId === "fake-tracker" &&
+    detail.EventType === "EXIT" &&
+    detail.GeofenceId.toLowerCase() === "home"
+  ) {
     return true;
   }
 
   const supportedAction = "EXIT";
-  const supportedFences = ['arlington'];
+  const supportedFences = ["arlington"];
 
   return (
     detail.EventType === supportedAction &&
     supportedFences.includes(detail.GeofenceId.toLowerCase())
   );
 }
-async function sendDiscordAnnouncement(deviceId: string, time: string, zip: string, geofence: string, action: string) {
+async function sendDiscordAnnouncement(
+  deviceId: string,
+  time: string,
+  zip: string,
+  geofence: string,
+  action: string,
+) {
   const url = process.env.CASEYS_DISCORD_WEBHOOK_URL;
   await fetch(url!, {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({
-      content: `Pizza ordered for device ${deviceId} from zip ${zip} scheduled for ${time}, based on ${action} from geofence ${geofence}`
-    })
+      content: `Pizza ordered for device ${deviceId} from zip ${zip} scheduled for ${time}, based on ${action} from geofence ${geofence}`,
+    }),
   });
 }
 
 type Mapping = {
   zip: string;
   distanceToTravel: number;
-}
-function resolvePizzaLocationAndDetails(detail: GeofenceType): { zip: string; time: string; } {
+};
+function resolvePizzaLocationAndDetails(detail: GeofenceType): {
+  zip: string;
+  time: string;
+} {
   const mappings: { [k: string]: Mapping } = {
     arlington: {
-      zip: '68064',
-      distanceToTravel: 14.2
+      zip: "68064",
+      distanceToTravel: 14.2,
     },
     home: {
-      zip: '68104',
-      distanceToTravel: 20
-    }
-  }
+      zip: "68104",
+      distanceToTravel: 20,
+    },
+  };
   const fenceId = detail.GeofenceId.toLowerCase();
   const locationSettings = mappings[fenceId];
 
   if (!locationSettings) {
-    console.warn("Could not resolve pizza locations, just using defaults from env");
+    console.warn(
+      "Could not resolve pizza locations, just using defaults from env",
+    );
     const { CASEYS_ZIP, CASEYS_TIME } = process.env;
     return { zip: CASEYS_ZIP!, time: CASEYS_TIME! };
   }
 
-  const time = getCheckoutTime(locationSettings.distanceToTravel, detail.SampleTime);
+  const time = getCheckoutTime(
+    locationSettings.distanceToTravel,
+    detail.SampleTime,
+  );
 
   return { zip: locationSettings.zip, time };
 }
-
-
