@@ -5,6 +5,7 @@ import { sendPushEvent } from "./push";
 import webpush from "web-push";
 import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
 import {basename} from 'path';
+import {readFile} from 'fs/promises';
 
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
 let args = [
@@ -171,7 +172,7 @@ function resolvePizzaLocationAndDetails(detail: GeofenceType): {
     },
     home: {
       zip: "68104",
-      distanceToTravel: 20,
+      distanceToTravel: 40,
     },
   };
   const fenceId = detail.GeofenceId.toLowerCase();
@@ -198,10 +199,11 @@ async function uploadVideo(video: string) {
   console.log(`ready to save file ${video} as name ${key}`)
 
   try {
+    const Body = await readFile(video);
     const client = new S3Client();
     const upload = new PutObjectCommand({
       Bucket: 'spot-caseys-pizza',
-      Body: video,
+      Body,
       Key: key
     });
     const result = await client.send(upload);
