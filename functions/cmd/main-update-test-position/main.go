@@ -17,7 +17,7 @@ func main() {
 	arlington := []float64{41.452374, -96.354280}
 	home := []float64{41.276497, -95.988033}
 
-	isAtHome := true
+	isAtHome := false
 	var lon, lat float64
 	if isAtHome {
 		lon = home[1]
@@ -29,7 +29,10 @@ func main() {
 		lat = peanut[0]
 	}
 	sampleTime := time.Now()
+	// Fake device
 	deviceId := "fake-tracker"
+	// Real device
+	deviceId = "foobar"
 
 	spot.UpdatePositionWithDeviceId(cfg, lon, lat, sampleTime, deviceId)
 	fmt.Printf("Updated fake tracker. %d\n", isAtHome)
