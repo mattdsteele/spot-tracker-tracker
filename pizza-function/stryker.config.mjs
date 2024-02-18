@@ -10,5 +10,7 @@ const config = {
     "Take a look at https://stryker-mutator.io/docs/stryker-js/vitest-runner for information about the vitest plugin.",
   coverageAnalysis: "perTest",
   buildCommand: "npm run build",
+  plugins: ["@stryker-mutator/*","./stryker-console-ignorer.mjs"],
+  ignorers: ["console"],
 };
 export default config;
