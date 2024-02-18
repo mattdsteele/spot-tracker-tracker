@@ -12,5 +12,6 @@ const config = {
   buildCommand: "npm run build",
   plugins: ["@stryker-mutator/*","./stryker-console-ignorer.mjs"],
   ignorers: ["console"],
+  ignorePatterns: ["*-playwright.ts"]
 };
 export default config;
