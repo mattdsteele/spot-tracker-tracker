@@ -7,6 +7,7 @@ import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
 import {basename} from 'path';
 import {readFile} from 'fs/promises';
 
+// Stryker disable all
 // https://github.com/VikashLoomba/AWS-Lambda-Docker-Playwright/blob/master/app/app.js
 let args = [
   "--autoplay-policy=user-gesture-required",
@@ -47,6 +48,7 @@ let args = [
   "--use-mock-keychain",
   "--single-process",
 ];
+// Stryker restore all
 
 type GeofenceType = {
   GeofenceId: string;
