@@ -11,7 +11,6 @@ const config = {
   coverageAnalysis: "perTest",
   buildCommand: "npm run build",
   plugins: ["@stryker-mutator/*","./stryker-console-ignorer.mjs"],
-  ignorers: ["console"],
-  ignorePatterns: ["*-playwright.ts"]
+  ignorers: ["console"]
 };
 export default config;

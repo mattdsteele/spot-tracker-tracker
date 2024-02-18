@@ -1,3 +1,4 @@
+// Stryker disable all
 import { BrowserContext, LaunchOptions, Page } from "playwright";
 import { chromium } from "playwright-extra";
 import { tmpdir } from "os";
